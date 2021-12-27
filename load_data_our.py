@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 import glob
 import os
 
-path_data = '/data/rj21/test/Data'
+path_data = '/data/rj21/MyoSeg/Data'
 
 # data_list = glob.glob( path_data + "/**/*.dcm", recursive=True)  
 
@@ -26,14 +26,20 @@ for dir_name in os.listdir(path_data):
                 dataset = dcm.dcmread(os.path.join(path1, slice_name))
                 t = dataset.SeriesDescription
                 
-                if t.find('T1')>=0:
-                    if t.find('PRE')>=0 or t.find('Pre')>=0:
-                        data_list.append(os.path.join(path1, slice_name))
+                # if t.find('T1')>=0:
+                #     # data_list.append(os.path.join(path1, slice_name))
+                    
+                #     if t.find('post')>=0 or t.find('Post')>=0:
+                #         data_list.append(os.path.join(path1, slice_name))
+                        
+                #     # if t.find('PRE')>=0 or t.find('Pre')>=0:
+                #         # data_list.append(os.path.join(path1, slice_name))
                
-                # if t.find('T2')>=0:
-                #     data_list.append(os.path.join(path1, slice_name))
-                #         # print(os.path.join(path1, slice_name))
-                #         # print(t)
+                
+                if t.find('T2')>=0:
+                    data_list.append(os.path.join(path1, slice_name))
+                        # print(os.path.join(path1, slice_name))
+                        # print(t)
                 
                 # data_list.append(os.path.join(path1, slice_name))
 
@@ -48,7 +54,7 @@ data_list.sort()
 # plt.show()
 
 
-for i in range(0,50):        
+for i in range(0,1000,10):        
     dataset = dcm.dcmread(data_list[i])
     
     print(dataset.ProtocolName)

@@ -1,11 +1,3 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-"""
-Created on Wed Dec 22 11:13:15 2021
-
-@author: rj21
-"""
-
 import pydicom as dcm
 import matplotlib.pyplot as plt
 

@@ -1,17 +1,11 @@
 import os
 import numpy as np
 import matplotlib.pyplot as plt
-# import matplotlib.image as im
-# import nibabel as nib
 import SimpleITK as sitk
-# import medpy as medpy
-# import pandas as pd
 import torch
 from torch.utils import data
 import torch.optim as optim
 import glob
-# import cv2
-# import SimpleITK as sitk
 
 import load_data
 import Unet_2D
@@ -76,11 +70,6 @@ class DataLoader():
         
         return img, mask
 
-
-def dice_loss(X, Y):
-    eps = 1.
-    dice = ((2. * torch.sum(X*Y) + eps) / (torch.sum(X) + torch.sum(Y) + eps) )
-    return 1 - dice
 
 
 torch.cuda.empty_cache()
