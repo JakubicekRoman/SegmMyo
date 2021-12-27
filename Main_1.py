@@ -19,25 +19,29 @@ net = Unet_2D.UNet(enc_chs=(1,64,128,256,512), dec_chs=(512,256,128,64), out_sz=
 # net = torch.load(r"D:\jakubicek\SegmMyo\Models\net_v1_0.pt")
 
 net = net.cuda()
-optimizer = optim.Adam(net.parameters(), lr=0.0001, weight_decay=0.000001)
+optimizer = optim.Adam(net.parameters(), lr=0.00001, weight_decay=0.000001)
 # optimizer = optim.SGD(net2.parameters(), lr=0.000001, weight_decay=0.0001, momentum= 0.8)
-scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=20, gamma=0.1, verbose=True)
+scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=10, gamma=0.1, verbose=True)
 
 
 
 # path_data = '/data/rj21/MyoSeg/Data_ACDC/training'  # Linux bioeng358
 path_data = 'D:\jakubicek\SegmMyo\Data_ACDC\\training'  # Win CUDA2
 data_list_train, data_list_test = Util.CreateDataset(os.path.normpath( path_data ))
-random.shuffle(data_list_train)
-
-batch = 16
 
 train_loss=[]
+train_Dice=[]
+test_Dice=[]
+diceTe=[]
+diceTr=[]
 
-for epch in range(0,20):
+for epch in range(0,30):
     random.shuffle(data_list_train)
-    net.train()
-            
+    net.train(mode=True)
+    batch = 16
+    diceTr=[]
+    diceTe=[]
+        
     for num in range(0,len(data_list_train)-batch-1, batch):
 
         
@@ -55,8 +59,8 @@ for epch in range(0,20):
             mask = Loaders.read_nii( mask_path, (0,0,current_index,t) )
             mask = mask==2
         
-            img = Util.center_crop(img, new_width=128, new_height=128)
-            mask = Util.center_crop(mask, new_width=128, new_height=128)
+            img, transl = Util.augmentation(img, new_width=128, new_height=128, rand_tr='Rand')
+            mask, _  = Util.augmentation(mask, new_width=128, new_height=128, rand_tr = transl)
     
             img = np.expand_dims(img, 0).astype(np.float32)
             mask = np.expand_dims(mask, 0).astype(np.float32)
@@ -83,12 +87,58 @@ for epch in range(0,20):
     
         optimizer.zero_grad()
         loss.backward()
+        torch.nn.utils.clip_grad_value_(net.parameters(), clip_value=1.0)
         optimizer.step()
+        
+        dice = Util.dice_coef( res[:,0,:,:]>0.5, Masks[:,0,:,:].cuda() )                
+        diceTr.append(dice.detach().cpu().numpy())
         
         torch.cuda.empty_cache()
 
 
     scheduler.step()
+    
+    batch = 64
+    net.train(mode=False)
+    random.shuffle(data_list_test)
+
+    for num in range(0,len(data_list_test)-batch-1, batch):
+       
+        t=0
+        Imgs = torch.tensor(np.zeros((batch,1,128,128) ), dtype=torch.float32)
+        Masks = torch.tensor(np.zeros((batch,2,128,128) ), dtype=torch.float32)
+
+        
+        for b in range(0,batch):
+            current_index = data_list_test[num+b]['slice']
+            img_path = data_list_test[num+b]['img_path']
+            mask_path = data_list_test[num+b]['mask_path']
+        
+            img = Loaders.read_nii( img_path, (0,0,current_index,t) )
+            mask = Loaders.read_nii( mask_path, (0,0,current_index,t) )
+            mask = mask==2
+        
+            img, transl = Util.augmentation(img, new_width=128, new_height=128, rand_tr='Rand')
+            mask, _  = Util.augmentation(mask, new_width=128, new_height=128, rand_tr = transl)
+    
+            img = np.expand_dims(img, 0).astype(np.float32)
+            mask = np.expand_dims(mask, 0).astype(np.float32)
+    
+            Imgs[b,0,:,:] = torch.tensor(img)
+            Masks[b,0,:,:] = torch.tensor(mask)
+        
+        
+        with torch.no_grad(): 
+            res = net( Imgs.cuda() )
+            res = torch.softmax(res,dim=1)
+                         
+        dice = Util.dice_coef( res[:,0,:,:]>0.5, Masks[:,0,:,:].cuda() )                
+        diceTe.append(dice.detach().cpu().numpy())
+        
+        torch.cuda.empty_cache()
+    
+    train_Dice.append(np.mean(diceTr))
+    test_Dice.append(np.mean(diceTe))
     
     plt.figure
     plt.imshow(Imgs[2,0,:,:].detach().numpy(), cmap='gray')
@@ -97,5 +147,11 @@ for epch in range(0,20):
     
     plt.figure
     plt.plot(train_loss)
+    plt.ylim([0.0, 0.6])
+    plt.show()
+    
+    plt.figure
+    plt.plot(train_Dice)
+    plt.plot(test_Dice)
     plt.show()
 

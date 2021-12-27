@@ -6,7 +6,7 @@ import random
 import Loaders
 
 
-def center_crop(img, new_width=None, new_height=None):        
+def augmentation(img, new_width=None, new_height=None, rand_tr='Rand'):        
 
     width = img.shape[1]
     height = img.shape[0]
@@ -15,11 +15,18 @@ def center_crop(img, new_width=None, new_height=None):
         new_width = min(width, height)
 
     if new_height is None:
-        new_height = min(width, height)
+        new_height = min(width, height)  
 
-    max_tr = (int(np.ceil((width - new_width) / 10)), int(np.ceil((height - new_height) / 10))) 
-    rand_transl = (random.randint( -max_tr[0], max_tr[0]) , random.randint( -max_tr[1], max_tr[1] )  )
-    # print(rand_transl)
+    if isinstance(rand_tr, str):
+        if rand_tr.find('Rand')>=0:
+            max_tr = (int(np.ceil((width - new_width) / 4)), int(np.ceil((height - new_height) / 4))) 
+            rand_transl = (random.randint( -max_tr[0], max_tr[0]) , random.randint( -max_tr[1], max_tr[1] )  )
+            # print(rand_transl)
+        elif rand_tr.find('None')>=0:
+            rand_transl = (0, 0)
+    else:
+        rand_transl = rand_tr
+        
     
     left = int(np.ceil((width - new_width) / 2)) + rand_transl[0]
     right = width - int(np.floor((width - new_width) / 2)) + rand_transl[0]
@@ -38,7 +45,7 @@ def center_crop(img, new_width=None, new_height=None):
     else:
         center_cropped_img = img[top:bottom, left:right, ...]
 
-    return center_cropped_img
+    return center_cropped_img, rand_transl
 
 
 
@@ -54,6 +61,11 @@ def dice_loss(X, Y):
     eps = 0.000
     dice = ((2. * torch.sum(X*Y) + eps) / (torch.sum(X) + torch.sum(Y) + eps) )
     return 1 - dice
+
+def dice_coef(X, Y):
+    eps = 0.000
+    dice = ((2. * torch.sum(X*Y) + eps) / (torch.sum(X) + torch.sum(Y) + eps) )
+    return dice
 
 
 def CreateDataset(path_data, ):      
