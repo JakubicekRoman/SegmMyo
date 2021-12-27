@@ -6,48 +6,96 @@ import torch
 from torch.utils import data
 import torch.optim as optim
 import glob
+import random
+import torchvision.transforms as T
 
 import Utilities as Util
 import Loaders
 import Unet_2D
 
 
-net = Unet_2D.UNet(enc_chs=(1,64,128,256), dec_chs=(256,128,64), out_sz=(128,128), retain_dim=False, num_class=2)
+
+net = Unet_2D.UNet(enc_chs=(1,64,128,256,512), dec_chs=(512,256,128,64), out_sz=(128,128), retain_dim=False, num_class=2)
+# net = torch.load(r"D:\jakubicek\SegmMyo\Models\net_v1_0.pt")
+
 net = net.cuda()
+optimizer = optim.Adam(net.parameters(), lr=0.0001, weight_decay=0.000001)
+# optimizer = optim.SGD(net2.parameters(), lr=0.000001, weight_decay=0.0001, momentum= 0.8)
+scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=20, gamma=0.1, verbose=True)
+
 
 
 # path_data = '/data/rj21/MyoSeg/Data_ACDC/training'  # Linux bioeng358
 path_data = 'D:\jakubicek\SegmMyo\Data_ACDC\\training'  # Win CUDA2
-
 data_list_train, data_list_test = Util.CreateDataset(os.path.normpath( path_data ))
+random.shuffle(data_list_train)
 
-num = 4
+batch = 16
 
-t=0
-current_index = data_list_train[num]['slice']
-img_path = data_list_train[num]['img_path']
+train_loss=[]
 
-img = Loaders.read_nii( img_path, (0,0,current_index,t) )
+for epch in range(0,20):
+    random.shuffle(data_list_train)
+    net.train()
+            
+    for num in range(0,len(data_list_train)-batch-1, batch):
 
-img = Util.center_crop(img, new_width=128, new_height=128)
+        
+        t=0
+        Imgs = torch.tensor(np.zeros((batch,1,128,128) ), dtype=torch.float32)
+        Masks = torch.tensor(np.zeros((batch,2,128,128) ), dtype=torch.float32)
+        
+        for b in range(0,batch):
+            current_index = data_list_train[num+b]['slice']
+            img_path = data_list_train[num+b]['img_path']
+            mask_path = data_list_train[num+b]['mask_path']
+        
+        
+            img = Loaders.read_nii( img_path, (0,0,current_index,t) )
+            mask = Loaders.read_nii( mask_path, (0,0,current_index,t) )
+            mask = mask==2
+        
+            img = Util.center_crop(img, new_width=128, new_height=128)
+            mask = Util.center_crop(mask, new_width=128, new_height=128)
+    
+            img = np.expand_dims(img, 0).astype(np.float32)
+            mask = np.expand_dims(mask, 0).astype(np.float32)
+    
+            Imgs[b,0,:,:] = torch.tensor(img)
+            Masks[b,0,:,:] = torch.tensor(mask)
+        
+        # rotater = T.RandomRotation(degrees=(-60, 60))
+        # rotated_imgs = rotater(Imgs)
+        
+        res = net( Imgs.cuda() )
+        res = torch.softmax(res,dim=1)
+        
+        
+        Masks[:,1,:,:] = (1-Masks[:,0,:,:])
+        # Masks[:,0,:,:] = Masks[:,0,:,:]*2
+        
+        # loss = Util.dice_loss(res, Masks.cuda() )
+        # loss = torch.nn.CrossEntropyLoss()(res[:,1,:,:],  Masks.type(torch.long).cuda() )
+        # loss = -torch.mean( torch.log( torch.cat( (res[Masks==1], res[Masks==2]/20 ), 0 ) )  )
+        loss = -torch.mean( torch.log( res[Masks==1] ))
+                                                   
+        train_loss.append(loss.detach().cpu().numpy())
+    
+        optimizer.zero_grad()
+        loss.backward()
+        optimizer.step()
+        
+        torch.cuda.empty_cache()
 
-plt.figure
-plt.imshow(img, cmap='gray')
-plt.show()
 
-img = np.expand_dims(img,0)
-img = np.expand_dims(img,0).astype(np.float32)
-
-img = torch.tensor(img).cuda()
-
-res = net( img )
-
-res = torch.softmax(res,dim=1)
-
-res_img = res.detach().cpu().numpy()[0,1,:,:]
-
-plt.figure
-plt.imshow(res_img, cmap='jet')
-plt.show()
-
+    scheduler.step()
+    
+    plt.figure
+    plt.imshow(Imgs[2,0,:,:].detach().numpy(), cmap='gray')
+    plt.imshow(res[2,1,:,:].detach().cpu().numpy(), cmap='jet', alpha=0.2)
+    plt.show()
+    
+    plt.figure
+    plt.plot(train_loss)
+    plt.show()
 
