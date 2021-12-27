@@ -1,5 +1,8 @@
 import numpy as np
 import torch
+import os
+
+import Loaders
 
 
 def center_crop(img, new_width=None, new_height=None):        
@@ -40,3 +43,33 @@ def dice_loss(X, Y):
     eps = 1.
     dice = ((2. * torch.sum(X*Y) + eps) / (torch.sum(X) + torch.sum(Y) + eps) )
     return 1 - dice
+
+
+
+def CreateDataset(path_data, ):      
+
+    data_list_tr = []
+    data_list_te = []
+    pat = 0
+
+    for dir_name in os.listdir(path_data):
+        if os.path.isdir(os.path.join(path_data, dir_name)):
+            
+            pat_name = os.path.join(path_data, dir_name)
+            file_name = os.listdir(pat_name)
+            
+            sizeData = Loaders.size_nii( os.path.join(pat_name, file_name[2] ) )
+            
+            if pat<=80:
+                for ind_slice in range(0,sizeData[2]):
+                    data_list_tr.append( {'img_path': os.path.join(pat_name, file_name[2] ), 
+                                       'mask_path': os.path.join(pat_name, file_name[3] ),
+                                       'slice': ind_slice } )
+            else:
+                for ind_slice in range(0,sizeData[2]):
+                    data_list_te.append( {'img_path': os.path.join(pat_name, file_name[2] ), 
+                                       'mask_path': os.path.join(pat_name, file_name[3] ),
+                                       'slice': ind_slice } )        
+            pat = pat+1
+            
+    return data_list_tr, data_list_te
