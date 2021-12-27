@@ -7,7 +7,6 @@ from torch.utils import data
 import torch.optim as optim
 import glob
 
-import load_datay
 import Unet_2D
 
 
@@ -87,7 +86,7 @@ testloader = data.DataLoader(loaderTe,batch_size=2, num_workers=0, shuffle=False
 
 ##### create NET --  U-net
 
-net = Unet_2D.UNet(enc_chs=(1,64,128,256), dec_chs=(256,128, 64), out_sz=(224,224))
+net = Unet_2D.UNet(enc_chs=(1,64,128,256), dec_chs=(256,128, 64), out_sz=(128,128))
 net = net.cuda()
 
 optimizer = optim.Adam(net.parameters(), lr=0.0001,weight_decay=1e-8)
