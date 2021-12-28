@@ -4,6 +4,7 @@ import os
 import random
 import xlsxwriter
 import pandas as pd
+import pydicom as dcm
 
 import Loaders
 
@@ -104,6 +105,42 @@ def CreateDataset(path_data, ):
             pat = pat+1
             
     return data_list_tr, data_list_te
+
+
+def CreateDatasetOur(path_data ):      
+
+    data_list = []
+    for dir_name in os.listdir(path_data):
+        if os.path.isdir(os.path.join(path_data, dir_name)):
+            sdir_list = os.listdir(os.path.join(path_data, dir_name))
+            sdir_list.sort()
+             
+            for _, sdir_name in enumerate(sdir_list):
+                path1 = os.path.join(path_data, dir_name, sdir_name)
+                
+                dataset = dcm.dcmread( os.path.join( path1, os.listdir(path1)[0] ) )
+                t = dataset.SeriesDescription
+                
+                # if t.find('T1')>=0:
+                #     if t.find('post')>=0 or t.find('Post')>=0:
+                    # if t.find('PRE')>=0 or t.find('Pre')>=0:  
+                        
+                if t.find('T2')>=0:
+
+                    # ind_slice=0
+                    ssdir_list = os.listdir(os.path.join(path1))
+                    ssdir_list.sort()
+                    # for slice_name in os.listdir(path1): 
+                    for ind_slice, slice_name in enumerate(ssdir_list):
+                        data_list.append( {'img_path': os.path.join(path1, slice_name), 
+                                           'mask_path': 'None',
+                                           'slice': ind_slice,
+                                           'Description': t } ) 
+                        # ind_slice+=1
+            
+    # data_list.sort()            
+    return data_list
+
 
 
 def save_to_excel(dataframe, root_dir, name):

@@ -22,9 +22,11 @@ net = torch.load(r"D:\jakubicek\SegmMyo\Models\net_v1_2.pt")
 
 net = net.cuda()
 
+## -------------- validation for \ADCD ------------------
 # path_data = '/data/rj21/MyoSeg/Data_ACDC/training'  # Linux bioeng358
 path_data = 'D:\jakubicek\SegmMyo\Data_ACDC\\training'  # Win CUDA2
 data_list_train, data_list_test = Util.CreateDataset(os.path.normpath( path_data ))
+
 
 res_table = pd.DataFrame(data=[], columns=['FileName', 'Slice' ,'ID_image', 'Dice'] )                                         
 
@@ -38,7 +40,7 @@ net.train(mode=False)
 # random.shuffle(data_list_test)
 
 # for num in range(0,len(data_list_test)-batch-1, batch):
-for num in range(0,414):    
+for num in range(0,1):    
    
     t=0
     Imgs = torch.tensor(np.zeros((batch,1,128,128) ), dtype=torch.float32)
@@ -83,7 +85,7 @@ for num in range(0,414):
     res_table.loc[(num,'Slice')] = current_index
     res_table.loc[(num,'Dice')] = dice.detach().cpu().numpy()
     
-    path_save = 'valid\\Main_1'
+    path_save = 'valid\\Main_1\StThomas'
     
     Util.save_to_excel(res_table, path_save + '\\' , 'ResultsDet')
             
