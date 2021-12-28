@@ -2,6 +2,8 @@ import numpy as np
 import torch
 import os
 import random
+import xlsxwriter
+import pandas as pd
 
 import Loaders
 
@@ -102,3 +104,19 @@ def CreateDataset(path_data, ):
             pat = pat+1
             
     return data_list_tr, data_list_te
+
+
+def save_to_excel(dataframe, root_dir, name):
+    writer = pd.ExcelWriter(os.path.join(root_dir, '{}.xlsx'.format(name)),
+    engine='xlsxwriter',
+    datetime_format='yyyy-mm-dd',
+    date_format='yyyy-mm-dd')
+    sheet = name
+    dataframe.to_excel(writer, sheet_name=sheet)
+    
+    worksheet = writer.sheets[sheet]
+    worksheet.set_column('A:ZZ', 22)
+    writer.save()
+    
+    
+    
