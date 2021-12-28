@@ -1,3 +1,5 @@
+#for training Unet of ACDC - ED, ES
+
 import os
 import numpy as np
 import matplotlib.pyplot as plt
@@ -15,13 +17,13 @@ import Unet_2D
 
 
 
-net = Unet_2D.UNet(enc_chs=(1,64,128,256), dec_chs=(256,128,64), out_sz=(128,128), retain_dim=False, num_class=2)
+net = Unet_2D.UNet(enc_chs=(1,64,128,256,512), dec_chs=(512,256,128,64), out_sz=(128,128), retain_dim=False, num_class=2)
 # net = torch.load(r"D:\jakubicek\SegmMyo\Models\net_v1_0.pt")
 
 net = net.cuda()
-optimizer = optim.Adam(net.parameters(), lr=0.0001, weight_decay=0.000001)
+optimizer = optim.Adam(net.parameters(), lr=0.0001, weight_decay=0.0000001)
 # optimizer = optim.SGD(net2.parameters(), lr=0.000001, weight_decay=0.0001, momentum= 0.8)
-scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=10, gamma=0.1, verbose=True)
+scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=20, gamma=0.1, verbose=True)
 
 
 
@@ -35,7 +37,7 @@ test_Dice=[]
 diceTe=[]
 diceTr=[]
 
-for epch in range(0,30):
+for epch in range(0,40):
     random.shuffle(data_list_train)
     net.train(mode=True)
     batch = 8
@@ -62,6 +64,14 @@ for epch in range(0,30):
             img, transl = Util.augmentation(img, new_width=128, new_height=128, rand_tr='Rand')
             mask, _  = Util.augmentation(mask, new_width=128, new_height=128, rand_tr = transl)
     
+            rot = random.randint(1,4)
+            img = np.rot90(img,rot,(0,1))
+            mask = np.rot90(mask,rot,(0,1))
+            
+            if np.random.random()>0.5:
+                img = np.fliplr(img)
+                mask = np.fliplr(mask)
+            
             img = np.expand_dims(img, 0).astype(np.float32)
             mask = np.expand_dims(mask, 0).astype(np.float32)
     

@@ -39,12 +39,13 @@ def augmentation(img, new_width=None, new_height=None, rand_tr='Rand'):
 
     # top = int(np.ceil((height - new_height) / 2))
     # bottom = height - int(np.floor((height - new_height) / 2))
+    
 
     if len(img.shape) == 2:
         center_cropped_img = img[top:bottom, left:right]
     else:
         center_cropped_img = img[top:bottom, left:right, ...]
-
+        
     return center_cropped_img, rand_transl
 
 
