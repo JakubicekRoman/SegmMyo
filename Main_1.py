@@ -19,7 +19,7 @@ net = Unet_2D.UNet(enc_chs=(1,64,128,256,512), dec_chs=(512,256,128,64), out_sz=
 # net = torch.load(r"D:\jakubicek\SegmMyo\Models\net_v1_0.pt")
 
 net = net.cuda()
-optimizer = optim.Adam(net.parameters(), lr=0.00001, weight_decay=0.000001)
+optimizer = optim.Adam(net.parameters(), lr=0.0001, weight_decay=0.0000001)
 # optimizer = optim.SGD(net2.parameters(), lr=0.000001, weight_decay=0.0001, momentum= 0.8)
 scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=10, gamma=0.1, verbose=True)
 
@@ -38,7 +38,7 @@ diceTr=[]
 for epch in range(0,30):
     random.shuffle(data_list_train)
     net.train(mode=True)
-    batch = 16
+    batch = 8
     diceTr=[]
     diceTe=[]
         
@@ -87,7 +87,7 @@ for epch in range(0,30):
     
         optimizer.zero_grad()
         loss.backward()
-        torch.nn.utils.clip_grad_value_(net.parameters(), clip_value=1.0)
+        # torch.nn.utils.clip_grad_value_(net.parameters(), clip_value=1.0)
         optimizer.step()
         
         dice = Util.dice_coef( res[:,0,:,:]>0.5, Masks[:,0,:,:].cuda() )                
