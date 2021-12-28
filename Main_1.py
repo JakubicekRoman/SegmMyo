@@ -15,11 +15,11 @@ import Unet_2D
 
 
 
-net = Unet_2D.UNet(enc_chs=(1,64,128,256,512), dec_chs=(512,256,128,64), out_sz=(128,128), retain_dim=False, num_class=2)
+net = Unet_2D.UNet(enc_chs=(1,64,128,256), dec_chs=(256,128,64), out_sz=(128,128), retain_dim=False, num_class=2)
 # net = torch.load(r"D:\jakubicek\SegmMyo\Models\net_v1_0.pt")
 
 net = net.cuda()
-optimizer = optim.Adam(net.parameters(), lr=0.0001, weight_decay=0.0000001)
+optimizer = optim.Adam(net.parameters(), lr=0.0001, weight_decay=0.000001)
 # optimizer = optim.SGD(net2.parameters(), lr=0.000001, weight_decay=0.0001, momentum= 0.8)
 scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=10, gamma=0.1, verbose=True)
 
@@ -98,7 +98,7 @@ for epch in range(0,30):
 
     scheduler.step()
     
-    batch = 64
+    batch = 32
     net.train(mode=False)
     random.shuffle(data_list_test)
 
