@@ -28,6 +28,8 @@ class Encoder(nn.Module):
     
     def forward(self, x):
         ftrs = []
+        m, s = torch.mean(x,(2,3)), torch.std(x,(2,3))
+        x = (x - m[:,:,None, None]) / s[:,:,None,None]
         for block in self.enc_blocks:
             x = block(x)
             ftrs.append(x)

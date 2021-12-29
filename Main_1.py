@@ -72,6 +72,8 @@ for epch in range(0,40):
                 img = np.fliplr(img)
                 mask = np.fliplr(mask)
             
+            # img = (img - np.mean(img))/ np.std(img)
+            
             img = np.expand_dims(img, 0).astype(np.float32)
             mask = np.expand_dims(mask, 0).astype(np.float32)
     
