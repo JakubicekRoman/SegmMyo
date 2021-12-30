@@ -19,7 +19,7 @@ import Unet_2D
 
 
 # net = Unet_2D.UNet(enc_chs=(1,64,128,256,512), dec_chs=(512,256,128,64), out_sz=(128,128), retain_dim=False, num_class=2)
-net = torch.load(r"D:\jakubicek\SegmMyo\Models\net_v1_2.pt")
+net = torch.load(r"D:\jakubicek\SegmMyo\Models\net_v1_3.pt")
 
 net = net.cuda()
 
@@ -64,7 +64,6 @@ for num in range(0,len(data_list_test)):
         img, transl = Util.augmentation(img, new_width=128, new_height=128, rand_tr='None')
         # mask, _  = Util.augmentation(mask, new_width=128, new_height=128, rand_tr = transl)
         
-        img = img/25
         img = img.astype(np.float32)
         img = np.expand_dims(img, 0).astype(np.float32)
         # mask = np.expand_dims(mask, 0).astype(np.float32)
@@ -92,7 +91,7 @@ for num in range(0,len(data_list_test)):
     res_table.loc[(num,'Slice')] = current_index
     # res_table.loc[(num,'Dice')] = dice.detach().cpu().numpy()
     
-    path_save = 'valid\\Main_1\StThomas\T2'
+    path_save = 'valid\\Main_1\StThomas\T1_pre'
     
     # Util.save_to_excel(res_table, path_save + '\\' , 'ResultsDet')
             

@@ -121,21 +121,21 @@ def CreateDatasetOur(path_data ):
                 dataset = dcm.dcmread( os.path.join( path1, os.listdir(path1)[0] ) )
                 t = dataset.SeriesDescription
                 
-                # if t.find('T1')>=0:
-                #     if t.find('post')>=0 or t.find('Post')>=0:
-                    # if t.find('PRE')>=0 or t.find('Pre')>=0:  
+                if t.find('T1')>=0:
+                    # if t.find('post')>=0 or t.find('Post')>=0:
+                    if t.find('PRE')>=0 or t.find('Pre')>=0:  
                         
-                if t.find('T2')>=0:
+                # if t.find('T2')>=0:
 
-                    # ind_slice=0
-                    ssdir_list = os.listdir(os.path.join(path1))
-                    ssdir_list.sort()
-                    # for slice_name in os.listdir(path1): 
-                    for ind_slice, slice_name in enumerate(ssdir_list):
-                        data_list.append( {'img_path': os.path.join(path1, slice_name), 
-                                           'mask_path': 'None',
-                                           'slice': ind_slice,
-                                           'Description': t } ) 
+                        # ind_slice=0
+                        ssdir_list = os.listdir(os.path.join(path1))
+                        ssdir_list.sort()
+                        # for slice_name in os.listdir(path1): 
+                        for ind_slice, slice_name in enumerate(ssdir_list):
+                            data_list.append( {'img_path': os.path.join(path1, slice_name), 
+                                               'mask_path': 'None',
+                                               'slice': ind_slice,
+                                               'Description': t } ) 
                         # ind_slice+=1
             
     # data_list.sort()            

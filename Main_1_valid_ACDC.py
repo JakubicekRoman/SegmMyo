@@ -10,6 +10,7 @@ import glob
 import random
 import torchvision.transforms as T
 import pandas as pd
+import cv2
 
 import Utilities as Util
 import Loaders
@@ -18,7 +19,7 @@ import Unet_2D
 
 
 # net = Unet_2D.UNet(enc_chs=(1,64,128,256,512), dec_chs=(512,256,128,64), out_sz=(128,128), retain_dim=False, num_class=2)
-net = torch.load(r"D:\jakubicek\SegmMyo\Models\net_v1_2.pt")
+net = torch.load(r"D:\jakubicek\SegmMyo\Models\net_v1_3.pt")
 
 net = net.cuda()
 
@@ -39,8 +40,8 @@ batch = 1
 net.train(mode=False)
 # random.shuffle(data_list_test)
 
-# for num in range(0,len(data_list_test)-batch-1, batch):
-for num in range(0,1):    
+for num in range(0,len(data_list_test)-batch-1, batch):
+# for num in range(0,1):    
    
     t=0
     Imgs = torch.tensor(np.zeros((batch,1,128,128) ), dtype=torch.float32)
@@ -85,17 +86,17 @@ for num in range(0,1):
     res_table.loc[(num,'Slice')] = current_index
     res_table.loc[(num,'Dice')] = dice.detach().cpu().numpy()
     
-    path_save = 'valid\\Main_1\StThomas'
+    path_save = 'valid\\Main_1\ACDC'
     
     Util.save_to_excel(res_table, path_save + '\\' , 'ResultsDet')
             
-    Fig = plt.figure()
-    plt.imshow(Imgs[0,0,:,:].detach().numpy(), cmap='gray')
-    plt.imshow(res[0,1,:,:].detach().cpu().numpy(), cmap='jet', alpha=0.2)
-    plt.show()
-    plt.draw()
-    Fig.savefig( path_save + '\\' + 'Res_' + ID + '.png')
-    plt.close()
+    # Fig = plt.figure()
+    # plt.imshow(Imgs[0,0,:,:].detach().numpy(), cmap='gray')
+    # plt.imshow(res[0,1,:,:].detach().cpu().numpy(), cmap='jet', alpha=0.2)
+    # plt.show()
+    # plt.draw()
+    # Fig.savefig( path_save + '\\' + 'Res_' + ID + '.png')
+    # plt.close()
     
     Fig = plt.figure()
     plt.imshow(Imgs[0,0,:,:].detach().numpy(), cmap='gray')
