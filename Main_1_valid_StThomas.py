@@ -11,12 +11,15 @@ import random
 import torchvision.transforms as T
 import pandas as pd
 import pydicom as dcm
+import cv2
+import skimage
 
 import Utilities as Util
 import Loaders
 import Unet_2D
 
 
+## validation on testing data
 
 # net = Unet_2D.UNet(enc_chs=(1,64,128,256,512), dec_chs=(512,256,128,64), out_sz=(128,128), retain_dim=False, num_class=2)
 net = torch.load(r"D:\jakubicek\SegmMyo\Models\net_v1_3.pt")
@@ -44,8 +47,8 @@ batch = 1
 net.train(mode=False)
 # random.shuffle(data_list_test)
 
-for num in range(0,len(data_list_test)):
-# for num in range(0,10):    
+# for num in range(0,len(data_list_test)):
+for num in range(0,10):    
    
     t=0
     Imgs = torch.tensor(np.zeros((batch,1,128,128) ), dtype=torch.float32)
@@ -103,13 +106,13 @@ for num in range(0,len(data_list_test)):
     # Fig.savefig( path_save + '\\' + 'Res_' + ID + '.png')
     # plt.close()
     
-    Fig = plt.figure()
-    plt.imshow(Imgs[0,0,:,:].detach().numpy(), cmap='gray')
-    plt.imshow(res[0,1,:,:].detach().cpu().numpy()>0.5, cmap='jet', alpha=0.2)
-    plt.show()
-    plt.draw()
-    Fig.savefig( path_save + '\\' + 'Seg_' + ID + '.png')
-    plt.close()
+    # Fig = plt.figure()
+    # plt.imshow(Imgs[0,0,:,:].detach().numpy(), cmap='gray')
+    # plt.imshow(res[0,1,:,:].detach().cpu().numpy()>0.5, cmap='jet', alpha=0.2)
+    # plt.show()
+    # plt.draw()
+    # Fig.savefig( path_save + '\\' + 'Seg_' + ID + '.png')
+    # plt.close()
     
     # Fig = plt.figure()
     # plt.imshow(Imgs[0,0,:,:].detach().numpy(), cmap='gray')
@@ -119,4 +122,50 @@ for num in range(0,len(data_list_test)):
     # Fig.savefig( path_save + '\\' + 'GT_' + ID + '.png')
     # plt.close()
 
+    resB = (res[0,0,:,:].detach().cpu().numpy()>0.5).astype(np.dtype('uint8'))
+    dimg = cv2.dilate(resB, cv2.getStructuringElement(cv2.MORPH_ELLIPSE,(3,3)) )
+    ctr = dimg - resB
+    
+    imgB = Imgs[0,0,:,:].detach().numpy()
+    imgB = ( imgB - imgB.min() ) / (imgB.max() - imgB.min())
+    RGB_imgB = cv2.cvtColor(imgB,cv2.COLOR_GRAY2RGB)
+    comp = RGB_imgB[:,:,1]
+    comp[ctr==1]=1
+    RGB_imgB[:,:,1] = comp
+    
+    
+    plt.figure()
+    plt.imshow(RGB_imgB)
+    
+    plt.show()
+    plt.draw()
 
+    # Fig = plt.figure()
+    # plt.imshow(Imgs[0,0,:,:].detach().numpy(), cmap='gray')
+    # gray = cv2.cvtColor( res[0,1,:,:].detach().cpu().numpy()>0.5,cv2.COLOR_BGR2GRAY)
+    # contours , _ = cv2.findContours( resB ,cv2.RETR_EXTERNAL,cv2.CHAIN_APPROX_SIMPLE)
+
+    # cv2.drawContours(image=imgB, contours=contours, contourIdx=-1, color=(0, 255, 0), thickness=2, lineType=cv2.LINE_AA)
+
+    # see the results
+    # cv2.imshow('None approximation', imgB)
+    # cv2.waitKey(0)
+    # cv2.imwrite('contours_none_image1.jpg', imgB)
+    # cv2.destroyAllWindows()
+
+    # ctr = np.zeros((contours[0].shape[0]+1,2))
+    # ctr[:,0] = np.append(contours[0][:,0,0], contours[0][0,0,0])
+    # ctr[:,1] = np.append(contours[0][:,0,1], contours[0][0,0,1])
+    
+    # plt.figure()
+    # plt.imshow(imgB, cmap='gray')
+    # plt.plot( ctr[:,0],  ctr[:,1] , color='green')
+    
+    # plt.show()
+    # plt.draw()
+
+    # # plt.imshow(res[0,1,:,:].detach().cpu().numpy()>0.5, cmap='jet', alpha=0.2)
+    # plt.show()
+    # plt.draw()
+    # # Fig.savefig( path_save + '\\' + 'Seg_' + ID + '.png')
+    # # plt.close()
