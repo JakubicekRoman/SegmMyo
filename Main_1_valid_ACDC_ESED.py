@@ -19,13 +19,15 @@ import Unet_2D
 
 
 # net = Unet_2D.UNet(enc_chs=(1,64,128,256,512), dec_chs=(512,256,128,64), out_sz=(128,128), retain_dim=False, num_class=2)
-net = torch.load(r"D:\jakubicek\SegmMyo\Models\net_v1_3.pt")
+# net = torch.load(r"D:\jakubicek\SegmMyo\Models\net_v1_3.pt")
+net = torch.load(r"/data/rj21/MyoSeg/Models/net_v1_3.pt")
+
 
 net = net.cuda()
 
 ## -------------- validation for \ADCD ------------------
-# path_data = '/data/rj21/MyoSeg/Data_ACDC/training'  # Linux bioeng358
-path_data = 'D:\jakubicek\SegmMyo\Data_ACDC\\training'  # Win CUDA2
+path_data = '/data/rj21/MyoSeg/Data_ACDC/training'  # Linux bioeng358
+# path_data = 'D:\jakubicek\SegmMyo\Data_ACDC\\training'  # Win CUDA2
 data_list_train, data_list_test = Util.CreateDataset(os.path.normpath( path_data ))
 
 
@@ -90,7 +92,7 @@ for num in range(0,len(data_list_test)-batch-1, batch):
     
     Util.save_to_excel(res_table, path_save + '\\' , 'ResultsDet')
             
-    # Fig = plt.figure()
+     # Fig = plt.figure()
     # plt.imshow(Imgs[0,0,:,:].detach().numpy(), cmap='gray')
     # plt.imshow(res[0,1,:,:].detach().cpu().numpy(), cmap='jet', alpha=0.2)
     # plt.show()

@@ -32,6 +32,7 @@ def size_nii(file_name):
     
     return sizeA
 
+
 def load_itk_image(filename):
     with open(filename) as f:
         contents = f.readlines()

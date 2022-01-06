@@ -2,17 +2,18 @@
 import os
 import numpy as np
 import matplotlib.pyplot as plt
-import SimpleITK as sitk
+# import SimpleITK as sitk
 import torch
-from torch.utils import data
-import torch.optim as optim
-import glob
-import random
-import torchvision.transforms as T
+# from torch.utils import data
+# import torch.optim as optim
+# import glob
+# import random
+# import torchvision.transforms as T
 import pandas as pd
 import pydicom as dcm
 import cv2
-import skimage
+# import skimage
+import pickle
 
 import Utilities as Util
 import Loaders
@@ -22,33 +23,35 @@ import Unet_2D
 ## validation on testing data
 
 # net = Unet_2D.UNet(enc_chs=(1,64,128,256,512), dec_chs=(512,256,128,64), out_sz=(128,128), retain_dim=False, num_class=2)
-net = torch.load(r"D:\jakubicek\SegmMyo\Models\net_v1_3.pt")
-
+# net = torch.load(r"D:\jakubicek\SegmMyo\Models\net_v1_3.pt")
+net = torch.load(r"/data/rj21/MyoSeg/Models/net_v1_3.pt")
 net = net.cuda()
 
-## -------------- validation for \ADCD ------------------
-# # path_data = '/data/rj21/MyoSeg/Data_ACDC/training'  # Linux bioeng358
-# path_data = 'D:\jakubicek\SegmMyo\Data_ACDC\\training'  # Win CUDA2
-# data_list_train, data_list_test = Util.CreateDataset(os.path.normpath( path_data ))
 
 ## -------------- validation for OUR data ---------------
-# path_data = '/data/rj21/MyoSeg/Data_ACDC/training'  # Linux bioeng358
-path_data = 'D:\jakubicek\SegmMyo\Clinical_Database_StThomas'  # Win CUDA2
+path_data = '/data/rj21/MyoSeg/Data'  # Linux bioeng358
+# path_data = 'D:\jakubicek\SegmMyo\Clinical_Database_StThomas'  # Win CUDA2
 data_list_test = Util.CreateDatasetOur(os.path.normpath( path_data ))
 
-res_table = pd.DataFrame(data=[], columns=['FileName', 'Slice' ,'ID_image', 'Dice'] )                                         
+file_name = "data_list_OUR_T1_pre.pkl"
+open_file = open(file_name, "wb")
+pickle.dump(data_list_test, open_file)
+open_file.close()
+# open_file = open(file_name, "rb")
+# data_list_test = pickle.load(open_file)
+# open_file.close()
 
+
+res_table = pd.DataFrame(data=[], columns=['FileName', 'Slice' ,'Info', 'SizeData' ,'ID_image','FilePath'] )                                         
 
 test_Dice=[]
 diceTe=[]
-diceTr=[]
     
 batch = 1
 net.train(mode=False)
-# random.shuffle(data_list_test)
 
-# for num in range(0,len(data_list_test)):
-for num in range(0,10):    
+for num in range(0,len(data_list_test)):
+# for num in range(0,300):    
    
     t=0
     Imgs = torch.tensor(np.zeros((batch,1,128,128) ), dtype=torch.float32)
@@ -59,6 +62,7 @@ for num in range(0,10):
         current_index = data_list_test[num+b]['slice']
         img_path = data_list_test[num+b]['img_path']
         mask_path = data_list_test[num+b]['mask_path']
+        nPat = data_list_test[num+b]['Patient']
     
         dataset = dcm.dcmread(img_path)
         info = dataset.SeriesDescription
@@ -87,85 +91,46 @@ for num in range(0,10):
     # test_Dice.append(np.mean(diceTe))
     
     ID = '0000000' + str(num)
-    ID = ID[-6:]
+    ID = ID[-3:]
     
-    res_table.loc[(num,'FileName')] =   img_path 
+    res_table.loc[(num,'FilePath')] =   img_path
+    res_table.loc[(num,'FileName')] =   nPat
     res_table.loc[(num,'ID_image')] =  ID
     res_table.loc[(num,'Slice')] = current_index
+    res_table.loc[(num,'Info')] = info
+    res_table.loc[(num,'SizeData')] = data_list_test[num+b]['Size']
     # res_table.loc[(num,'Dice')] = dice.detach().cpu().numpy()
     
-    path_save = 'valid\\Main_1\StThomas\T1_pre'
-    
-    # Util.save_to_excel(res_table, path_save + '\\' , 'ResultsDet')
+    # path_save = 'valid\\Main_1\StThomas\T1_pre'
+    path_save = '/data/rj21/MyoSeg/valid/Main_1/T1_post'
+    # path_save = '/data/rj21/MyoSeg/valid/Main_1/T2'
+
             
-    # Fig = plt.figure()
-    # plt.imshow(Imgs[0,0,:,:].detach().numpy(), cmap='gray')
-    # plt.imshow(res[0,1,:,:].detach().cpu().numpy(), cmap='jet', alpha=0.2)
-    # plt.show()
-    # plt.draw()
-    # Fig.savefig( path_save + '\\' + 'Res_' + ID + '.png')
-    # plt.close()
-    
-    # Fig = plt.figure()
-    # plt.imshow(Imgs[0,0,:,:].detach().numpy(), cmap='gray')
-    # plt.imshow(res[0,1,:,:].detach().cpu().numpy()>0.5, cmap='jet', alpha=0.2)
-    # plt.show()
-    # plt.draw()
-    # Fig.savefig( path_save + '\\' + 'Seg_' + ID + '.png')
-    # plt.close()
-    
-    # Fig = plt.figure()
-    # plt.imshow(Imgs[0,0,:,:].detach().numpy(), cmap='gray')
-    # plt.imshow(1-Masks[0,0,:,:].detach().cpu().numpy(), cmap='jet', alpha=0.2)
-    # plt.show()
-    # plt.draw()
-    # Fig.savefig( path_save + '\\' + 'GT_' + ID + '.png')
-    # plt.close()
 
     resB = (res[0,0,:,:].detach().cpu().numpy()>0.5).astype(np.dtype('uint8'))
     dimg = cv2.dilate(resB, cv2.getStructuringElement(cv2.MORPH_ELLIPSE,(3,3)) )
     ctr = dimg - resB
     
     imgB = Imgs[0,0,:,:].detach().numpy()
+    # m, s = np.mean(imgB,(0,1)), np.std(imgB,(0,1))
+    # imgB = (imgB - m) / s
     imgB = ( imgB - imgB.min() ) / (imgB.max() - imgB.min())
+    imgB = ( imgB - 0.0 ) / (0.5 - 0.0)
+    imgB[imgB>1.0]=1.0
     RGB_imgB = cv2.cvtColor(imgB,cv2.COLOR_GRAY2RGB)
     comp = RGB_imgB[:,:,1]
     comp[ctr==1]=1
     RGB_imgB[:,:,1] = comp
     
     
-    plt.figure()
+    Fig = plt.figure()
     plt.imshow(RGB_imgB)
     
     plt.show()
     plt.draw()
-
-    # Fig = plt.figure()
-    # plt.imshow(Imgs[0,0,:,:].detach().numpy(), cmap='gray')
-    # gray = cv2.cvtColor( res[0,1,:,:].detach().cpu().numpy()>0.5,cv2.COLOR_BGR2GRAY)
-    # contours , _ = cv2.findContours( resB ,cv2.RETR_EXTERNAL,cv2.CHAIN_APPROX_SIMPLE)
-
-    # cv2.drawContours(image=imgB, contours=contours, contourIdx=-1, color=(0, 255, 0), thickness=2, lineType=cv2.LINE_AA)
-
-    # see the results
-    # cv2.imshow('None approximation', imgB)
-    # cv2.waitKey(0)
-    # cv2.imwrite('contours_none_image1.jpg', imgB)
-    # cv2.destroyAllWindows()
-
-    # ctr = np.zeros((contours[0].shape[0]+1,2))
-    # ctr[:,0] = np.append(contours[0][:,0,0], contours[0][0,0,0])
-    # ctr[:,1] = np.append(contours[0][:,0,1], contours[0][0,0,1])
     
-    # plt.figure()
-    # plt.imshow(imgB, cmap='gray')
-    # plt.plot( ctr[:,0],  ctr[:,1] , color='green')
-    
-    # plt.show()
-    # plt.draw()
+    # Fig.savefig( path_save + '/' + 'res_' + nPat +  '_'  + ID + '.png')
+    # plt.close(Fig)
 
-    # # plt.imshow(res[0,1,:,:].detach().cpu().numpy()>0.5, cmap='jet', alpha=0.2)
-    # plt.show()
-    # plt.draw()
-    # # Fig.savefig( path_save + '\\' + 'Seg_' + ID + '.png')
-    # # plt.close()
+    # Util.save_to_excel(res_table, path_save + '/' , 'ResultsDet')
+
