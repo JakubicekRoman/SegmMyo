@@ -27,8 +27,8 @@ scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=20, gamma=0.1, verbos
 
 
 
-# path_data = '/data/rj21/MyoSeg/Data_ACDC/training'  # Linux bioeng358
-path_data = 'D:\jakubicek\SegmMyo\Data_ACDC\\training'  # Win CUDA2
+path_data = '/data/rj21/MyoSeg/Data_ACDC/training'  # Linux bioeng358
+# path_data = 'D:\jakubicek\SegmMyo\Data_ACDC\\training'  # Win CUDA2
 data_list_train, data_list_test = Util.CreateDataset(os.path.normpath( path_data ))
 
 train_loss=[]

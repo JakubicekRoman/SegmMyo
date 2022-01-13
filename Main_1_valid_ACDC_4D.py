@@ -43,9 +43,9 @@ net.train(mode=False)
 # random.shuffle(data_list_test)
 
 
-for num in range(0,len(data_list_test)-batch-1, batch):
+# for num in range(0,len(data_list_test)-batch-1, batch):
 # for num in range(0,len(data_list_test)-batch-1, 2):
-# for num in range(0,300):    
+for num in range(0,len(data_list_test)):    
    
     t=0
     Imgs = torch.tensor(np.zeros((batch,1,128,128) ), dtype=torch.float32)
@@ -92,7 +92,8 @@ for num in range(0,len(data_list_test)-batch-1, batch):
     res_table.loc[(num,'Slice')] = current_index
     res_table.loc[(num,'Dice')] = dice.detach().cpu().numpy()
     
-    path_save = '/data/rj21/MyoSeg/valid/Main_1/ACDC'
+    # path_save = '/data/rj21/MyoSeg/valid/Main_1/ACDC'
+    path_save = '/data/rj21/MyoSeg/valid/Main_1/example_4D/pat88'
     
     # Util.save_to_excel(res_table, path_save + '\\' , 'ResultsDet')
     
@@ -117,11 +118,11 @@ for num in range(0,len(data_list_test)-batch-1, batch):
     ID = '0000000' + str(current_index)
     ID = ID[-3:]
     
-    T = '0000000' + str(t)
-    T = T[-3:]
+    Te = '0000000' + str(t)
+    Te = Te[-3:]
 
     
-    Fig.savefig( path_save + '/' + 'res_' + nPat + '_' + ID + '_' + T + '.png')
+    Fig.savefig( path_save + '/' + 'res_' + nPat + '_' + ID + '_' + Te + '.png')
     plt.close()
             
      # Fig = plt.figure()

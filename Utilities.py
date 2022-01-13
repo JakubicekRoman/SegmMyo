@@ -112,7 +112,10 @@ def CreateDataset_4D(path_data):
     data_list_tr = []
     pat = 0
 
-    for dir_name in os.listdir(path_data):
+    d = os.listdir(path_data)
+    for ii in range(88,89):
+        dir_name = d[ii]
+    # for dir_name in os.listdir(path_data):
         if os.path.isdir(os.path.join(path_data, dir_name)):
             
             pat_name = os.path.join(path_data, dir_name)
@@ -121,8 +124,9 @@ def CreateDataset_4D(path_data):
             sizeData = Loaders.size_nii( os.path.join(pat_name, file_name[1] ) )
             
             for ind_slice in range(0,sizeData[2]):
-                # for t in range(0,sizeData[3]):
-                for t in range(0,1):
+            # for ind_slice in range(0,1):
+                for t in range(0,sizeData[3]):
+                # for t in range(0,1):
                     data_list_tr.append( {'img_path': os.path.join(pat_name, file_name[1] ), 
                                        'slice': ind_slice, 
                                         'time': t,
@@ -153,11 +157,11 @@ def CreateDatasetOur(path_data ):
                     sizeData = Loaders.size_nii( os.path.join( path1, slice_name ) )
                     
                     if  (np.array(sizeData[0:2])>127).all():
-                        if t.find('T1')>=0:
-                            # if t.find('post')>=0 or t.find('Post')>=0:
-                            # if t.find('PRE')>=0 or t.find('Pre')>=0:  
+                    #     if t.find('T1')>=0:
+                    #         if t.find('post')>=0 or t.find('Post')>=0:
+                    #         # if t.find('PRE')>=0 or t.find('Pre')>=0:  
                                 
-                        # if t.find('T2')>=0:
+                        if t.find('T2')>=0:
         
                                 # ind_slice=0
                                 # for slice_name in os.listdir(path1): 

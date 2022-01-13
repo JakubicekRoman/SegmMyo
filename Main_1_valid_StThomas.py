@@ -31,16 +31,21 @@ net = net.cuda()
 ## -------------- validation for OUR data ---------------
 path_data = '/data/rj21/MyoSeg/Data'  # Linux bioeng358
 # path_data = 'D:\jakubicek\SegmMyo\Clinical_Database_StThomas'  # Win CUDA2
-data_list_test = Util.CreateDatasetOur(os.path.normpath( path_data ))
+# data_list_test = Util.CreateDatasetOur(os.path.normpath( path_data ))
 
-file_name = "data_list_OUR_T1_pre.pkl"
-open_file = open(file_name, "wb")
-pickle.dump(data_list_test, open_file)
-open_file.close()
-# open_file = open(file_name, "rb")
-# data_list_test = pickle.load(open_file)
+file_name = "data_list_OUR_T2.pkl"
+
+# open_file = open(file_name, "wb")
+# pickle.dump(data_list_test, open_file)
 # open_file.close()
+open_file = open(file_name, "rb")
+data_list_test = pickle.load(open_file)
+open_file.close()
 
+# path_save = 'valid\\Main_1\StThomas\T1_pre'
+# path_save = '/data/rj21/MyoSeg/valid/Main_1/T1_pre'
+# path_save = '/data/rj21/MyoSeg/valid/Main_1/T1_post'
+path_save = '/data/rj21/MyoSeg/valid/Main_1/T2'
 
 res_table = pd.DataFrame(data=[], columns=['FileName', 'Slice' ,'Info', 'SizeData' ,'ID_image','FilePath'] )                                         
 
@@ -81,14 +86,10 @@ for num in range(0,len(data_list_test)):
     
     with torch.no_grad(): 
         res = net( Imgs.cuda() )
-        res = torch.softmax(res,dim=1)
-                     
-    # dice = Util.dice_coef( res[:,0,:,:]>0.5, Masks[:,0,:,:].cuda() )                
-    # diceTe.append(dice.detach().cpu().numpy())
+        res = torch.softmax(res,dim=1)                    
     
     torch.cuda.empty_cache()
 
-    # test_Dice.append(np.mean(diceTe))
     
     ID = '0000000' + str(num)
     ID = ID[-3:]
@@ -101,11 +102,7 @@ for num in range(0,len(data_list_test)):
     res_table.loc[(num,'SizeData')] = data_list_test[num+b]['Size']
     # res_table.loc[(num,'Dice')] = dice.detach().cpu().numpy()
     
-    # path_save = 'valid\\Main_1\StThomas\T1_pre'
-    path_save = '/data/rj21/MyoSeg/valid/Main_1/T1_post'
-    # path_save = '/data/rj21/MyoSeg/valid/Main_1/T2'
-
-            
+          
 
     resB = (res[0,0,:,:].detach().cpu().numpy()>0.5).astype(np.dtype('uint8'))
     dimg = cv2.dilate(resB, cv2.getStructuringElement(cv2.MORPH_ELLIPSE,(3,3)) )
@@ -115,7 +112,7 @@ for num in range(0,len(data_list_test)):
     # m, s = np.mean(imgB,(0,1)), np.std(imgB,(0,1))
     # imgB = (imgB - m) / s
     imgB = ( imgB - imgB.min() ) / (imgB.max() - imgB.min())
-    imgB = ( imgB - 0.0 ) / (0.5 - 0.0)
+    # imgB = ( imgB - 0.0 ) / (0.5 - 0.0)
     imgB[imgB>1.0]=1.0
     RGB_imgB = cv2.cvtColor(imgB,cv2.COLOR_GRAY2RGB)
     comp = RGB_imgB[:,:,1]
@@ -129,8 +126,8 @@ for num in range(0,len(data_list_test)):
     plt.show()
     plt.draw()
     
-    # Fig.savefig( path_save + '/' + 'res_' + nPat +  '_'  + ID + '.png')
-    # plt.close(Fig)
+    Fig.savefig( path_save + '/' + 'res_' + nPat +  '_'  + ID + '.png')
+    plt.close(Fig)
 
-    # Util.save_to_excel(res_table, path_save + '/' , 'ResultsDet')
+    Util.save_to_excel(res_table, path_save + '/' , 'ResultsDet')
 
