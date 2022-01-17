@@ -21,13 +21,13 @@ net = Unet_2D.UNet(enc_chs=(1,64,128,256,512), dec_chs=(512,256,128,64), out_sz=
 # net = torch.load(r"D:\jakubicek\SegmMyo\Models\net_v1_0.pt")
 
 net = net.cuda()
-optimizer = optim.Adam(net.parameters(), lr=0.0001, weight_decay=0.0000001)
+optimizer = optim.Adam(net.parameters(), lr=0.0005, weight_decay=0.000001)
 # optimizer = optim.SGD(net2.parameters(), lr=0.000001, weight_decay=0.0001, momentum= 0.8)
 scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=20, gamma=0.1, verbose=True)
 
 
 
-path_data = '/data/rj21/MyoSeg/Data_ACDC/training'  # Linux bioeng358
+path_data = '/data/rj21/Data/Data_ACDC/training'  # Linux bioeng358
 # path_data = 'D:\jakubicek\SegmMyo\Data_ACDC\\training'  # Win CUDA2
 data_list_train, data_list_test = Util.CreateDataset(os.path.normpath( path_data ))
 
@@ -37,10 +37,10 @@ test_Dice=[]
 diceTe=[]
 diceTr=[]
 
-for epch in range(0,40):
+for epch in range(0,60):
     random.shuffle(data_list_train)
     net.train(mode=True)
-    batch = 8
+    batch = 32
     diceTr=[]
     diceTe=[]
         
@@ -93,7 +93,9 @@ for epch in range(0,40):
         # loss = Util.dice_loss(res, Masks.cuda() )
         # loss = torch.nn.CrossEntropyLoss()(res[:,1,:,:],  Masks.type(torch.long).cuda() )
         # loss = -torch.mean( torch.log( torch.cat( (res[Masks==1], res[Masks==2]/20 ), 0 ) )  )
-        loss = -torch.mean( torch.log( res[Masks==1] ))
+        # loss1 = -torch.mean( torch.log( res[Masks==1] ))
+        loss = Util.dice_loss( res[:,0,:,:], Masks[:,0,:,:].cuda() )
+        # loss = loss1 + loss2
                                                    
         train_loss.append(loss.detach().cpu().numpy())
     
@@ -101,7 +103,7 @@ for epch in range(0,40):
         loss.backward()
         # torch.nn.utils.clip_grad_value_(net.parameters(), clip_value=1.0)
         optimizer.step()
-        
+                
         dice = Util.dice_coef( res[:,0,:,:]>0.5, Masks[:,0,:,:].cuda() )                
         diceTr.append(dice.detach().cpu().numpy())
         
@@ -159,7 +161,7 @@ for epch in range(0,40):
     
     plt.figure
     plt.plot(train_loss)
-    plt.ylim([0.0, 0.6])
+    plt.ylim([0.0, 0.9])
     plt.show()
     
     plt.figure

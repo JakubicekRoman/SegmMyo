@@ -55,16 +55,17 @@ def augmentation(img, new_width=None, new_height=None, rand_tr='Rand'):
 
 def crop_min(img):
     
-    s = min( img.shape)  
+    s = min( img.shape)
     img = img[0:s,0:s]
     
     return img
 
 
 def dice_loss(X, Y):
-    eps = 0.000
+    eps = 0.00001
     dice = ((2. * torch.sum(X*Y) + eps) / (torch.sum(X) + torch.sum(Y) + eps) )
     return 1 - dice
+
 
 def dice_coef(X, Y):
     eps = 0.000

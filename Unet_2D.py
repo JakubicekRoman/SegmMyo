@@ -17,7 +17,10 @@ class Block(nn.Module):
         self.BN    = nn.BatchNorm2d(in_ch)
     
     def forward(self, x):
-        return self.conv2(self.relu(self.conv1(self.BN(x))))
+        x = self.conv1(self.BN(x))
+        res = x
+        x = self.conv2(x)
+        return self.relu(x) + res
 
 
 class Encoder(nn.Module):
@@ -25,6 +28,7 @@ class Encoder(nn.Module):
         super().__init__()
         self.enc_blocks = nn.ModuleList([Block(chs[i], chs[i+1]) for i in range(len(chs)-1)])
         self.pool       = nn.MaxPool2d(2)
+        self.relu       = nn.ReLU()
     
     def forward(self, x):
         ftrs = []
@@ -32,7 +36,7 @@ class Encoder(nn.Module):
         x = (x - m[:,:,None, None]) / s[:,:,None,None]
         for block in self.enc_blocks:
             x = block(x)
-            ftrs.append(x)
+            ftrs.append(x)    
             x = self.pool(x)
         return ftrs
 
