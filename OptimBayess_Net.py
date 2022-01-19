@@ -5,6 +5,7 @@ import matplotlib.pyplot as plt
 import torch
 import torch.optim as optim
 import random
+import pickle
 from bayes_opt import BayesianOptimization
 
 import Utilities as Util
@@ -185,3 +186,13 @@ params=optimizer.max['params']
 # print(params)
 
 # 5:57
+
+file_name = "BO_Unet_ACDC.pkl"
+# open_file = open(file_name, "wb")
+# pickle.dump(optimizer, open_file)
+# pickle.dump(params, open_file)
+# open_file.close()
+
+open_file = open(file_name, "wb")
+pickle.dump(params, open_file)
+open_file.close()
