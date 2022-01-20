@@ -148,12 +148,12 @@ for epch in range(0,150):
                          
         dice = Util.dice_coef( res[:,0,:,:]>0.5, Masks[:,0,:,:].cuda() )                
         diceTe.append(dice.detach().cpu().numpy())
-        print(dice)
         
         torch.cuda.empty_cache()
     
     train_Dice.append(np.mean(diceTr))
     test_Dice.append(np.mean(diceTe))
+    print(np.mean(diceTe))
     
     plt.figure
     plt.imshow(Imgs[2,0,:,:].detach().numpy(), cmap='gray')
