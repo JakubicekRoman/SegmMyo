@@ -18,13 +18,13 @@ import Unet_2D
 
 
 
-net = Unet_2D.UNet(enc_chs=(1,64,128,256,512), dec_chs=(512,256,128,64), out_sz=(128,128), retain_dim=False, num_class=2)
-# net = torch.load(r"D:\jakubicek\SegmMyo\Models\net_v1_0.pt")
+# net = Unet_2D.UNet(enc_chs=(1,64,128,256,512), dec_chs=(512,256,128,64), out_sz=(128,128), retain_dim=False, num_class=2)
+net = torch.load(r"/data/rj21/MyoSeg/Models/net_v1_4.pt")
 
 net = net.cuda()
 optimizer = optim.Adam(net.parameters(), lr=0.000237, weight_decay=0.0000099)
 # optimizer = optim.SGD(net2.parameters(), lr=0.000001, weight_decay=0.0001, momentum= 0.8)
-scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=70, gamma=0.1, verbose=True)
+scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=2, gamma=0.1, verbose=True)
 
 
 
@@ -44,7 +44,7 @@ test_Dice=[]
 diceTe=[]
 diceTr=[]
 
-for epch in range(0,150):
+for epch in range(0,5):
     random.shuffle(data_list_train)
     net.train(mode=True)
     batch = 13
