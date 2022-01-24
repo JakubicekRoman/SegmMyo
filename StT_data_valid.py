@@ -14,6 +14,7 @@ import torchvision.transforms as T
 import pandas as pd
 import cv2
 import pickle
+import pydicom as dcm
 
 import Utilities as Util
 import Loaders
@@ -28,12 +29,15 @@ def CreateDataset7(path_data):
         f = os.listdir(os.path.join(path_data, pat_name))
         for _,file in enumerate(f):
             if file.find('_gt')>0:
-                # if file.find('Joint')>=0:
+                if file.find('Joint_T2')>=0:
                     path_mask = os.path.join(path_data, pat_name, file)
-                    name = file[0:file.find('_gt')]
-                    path_maps = os.path.join(path_data, pat_name, name+'.nii.gz')
-                    
+                    name = file[0:file.find('_gt')] + file[file.find('_gt')+3:]
+                    # path_maps = os.path.join(path_data, pat_name, name+'.nii.gz')
+                    path_maps = os.path.join(path_data, pat_name, name)
+
+                    # sizeData = Loaders.size( path_maps )
                     sizeData = Loaders.size_nii( path_maps )
+
                     if len(sizeData)==2:
                         sizeData = sizeData + (1,)
                     # print(sizeData)
@@ -43,7 +47,7 @@ def CreateDataset7(path_data):
                                               'mask_path': path_mask,
                                               'pat_name': pat_name,
                                               'file_name': name,
-                                              'slice': sl } )
+                                              'slice': name[-7:-4] } )
             
     return data_list_tr
 
@@ -53,23 +57,26 @@ path_data = '/data/rj21/Data/Data2/Resaved_data_StT'  # Linux bioeng358
 # path_data = 'D:\jakubicek\SegmMyo\Data_ACDC\\training'  # Win CUDA2
 data_list_test = CreateDataset7(os.path.normpath( path_data ))
 
-file_name = "data_list_Data2_all.pkl"
-open_file = open(file_name, "wb")
-pickle.dump(data_list_test, open_file)
-open_file.close()
+# file_name = "data_list_Data2_all_dcm.pkl"
+# open_file = open(file_name, "wb")
+# pickle.dump(data_list_test, open_file)
+# open_file.close()
 # open_file = open(file_name, "rb")
 # data_list_test = pickle.load(open_file)
 # open_file.close()
 
 
-net = torch.load(r"/data/rj21/MyoSeg/Models/net_v1_5.pt")
+# net = torch.load(r"/data/rj21/MyoSeg/Models/net_v1_5.pt")
+net = torch.load(r"/data/rj21/MyoSeg/Models/net_v2_1.pt")
 net = net.cuda()
+
+path_save = '/data/rj21/MyoSeg/valid/Main_2'
 
 batch = 1
 
 diceTe=[];
 
-for num in range(0,len(data_list_test),5):
+for num in range(200,len(data_list_test),5):
 # for num in range(22,23,1):    
    
     t=0
@@ -83,8 +90,13 @@ for num in range(0,len(data_list_test),5):
         mask_path = data_list_test[num+b]['mask_path']
         nPat = data_list_test[num+b]['pat_name']
     
-        img = Loaders.read_nii( img_path, (0,0,current_index,t) )
-        mask = Loaders.read_nii( mask_path, (0,0,current_index,t) )
+        # img = Loaders.read_nii( img_path, (0,0,current_index,t) )
+        # mask = Loaders.read_nii( mask_path, (0,0,current_index,t) )
+        dataset = dcm.dcmread(img_path)
+        img = dataset.pixel_array
+        dataset = dcm.dcmread(mask_path)
+        mask = dataset.pixel_array
+        mask = mask==1
         
         img = Util.crop_center(img, new_width=128, new_height=128)
         mask = Util.crop_center(mask, new_width=128, new_height=128)
@@ -126,16 +138,35 @@ for num in range(0,len(data_list_test),5):
     
     comp = RGB_imgB[:,:,0]
     comp[ctr==1]=1
+    comp[ctrGT==1]=0
     RGB_imgB[:,:,0] = comp
     
     comp = RGB_imgB[:,:,1]
+    comp[ctr==1]=0
     comp[ctrGT==1]=1
     RGB_imgB[:,:,1] = comp
+    
+    comp = RGB_imgB[:,:,2]
+    comp[ctr==1]=0
+    comp[ctrGT==1]=0
+    RGB_imgB[:,:,2] = comp
     
     Fig = plt.figure()
     plt.imshow(RGB_imgB)
     
     plt.show()
     plt.draw()
+    
+    Fig.savefig( path_save + '/' + 'res_' + nPat +  '_'  + str(current_index) + '.png')
+    plt.close(Fig)
+    
+    Fig = plt.figure()
+    plt.imshow(imgB, cmap='gray')
+    
+    plt.show()
+    plt.draw()
+    
+    Fig.savefig( path_save + '/' + 'res_' + nPat +  '_'  + str(current_index) + '_orig.png')
+    plt.close(Fig)
     
 print(np.mean(diceTe))
