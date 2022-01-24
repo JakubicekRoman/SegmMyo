@@ -1,4 +1,5 @@
 #for training Unet of ACDC - ED, ES
+## data2 training 
 
 import os
 import numpy as np
@@ -136,7 +137,7 @@ for epch in range(0,80):
         # torch.nn.utils.clip_grad_value_(net.parameters(), clip_value=1.0)
         optimizer.step()
                 
-        dice = Util.dice_coef( res[:,0,:,:]>0.5, Masks[:,0,:,:].cuda() )                
+        dice = Util.dice_coef( res[:,0,:,:]>0.25, Masks[:,0,:,:].cuda() )                
         diceTr.append(dice.detach().cpu().numpy())
         
         torch.cuda.empty_cache()
