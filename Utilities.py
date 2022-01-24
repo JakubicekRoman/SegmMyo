@@ -5,8 +5,26 @@ import random
 import xlsxwriter
 import pandas as pd
 import pydicom as dcm
+import torchvision.transforms as T
 
 import Loaders
+
+
+def augmentation2(img, params):        
+    angle = params[0]['Angle']
+    translate = params[0]['Transl']
+    scale = params[0]['Scale']
+    shear = 0
+    CenterCrop = params[0]['Crop_size']
+    
+    augm_img = T.functional.affine(img, angle, translate, scale, shear,  T.InterpolationMode('bilinear'))
+    augm_img = T.CenterCrop(size=CenterCrop)(augm_img)
+    resize = T.Resize((128,128), T.InterpolationMode('bilinear'))
+    augm_img = resize(augm_img)
+    augm_img = (augm_img - torch.min(augm_img))/ (torch.max(augm_img)-torch.min(augm_img))
+    augm_img = T.functional.adjust_sharpness(augm_img, 2)
+
+    return augm_img
 
 
 def augmentation(img, new_width=None, new_height=None, rand_tr='Rand'):        
@@ -18,7 +36,7 @@ def augmentation(img, new_width=None, new_height=None, rand_tr='Rand'):
         new_width = min(width, height)
 
     if new_height is None:
-        new_height = min(width, height)  
+        new_height = min(width, height)
 
     if isinstance(rand_tr, str):
         if rand_tr.find('Rand')>=0:
