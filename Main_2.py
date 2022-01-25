@@ -20,8 +20,8 @@ import Unet_2D
 
 
 
-net = Unet_2D.UNet(enc_chs=(1,64,128,256,512), dec_chs=(512,256,128,64), out_sz=(128,128), retain_dim=False, num_class=2)
-# net = torch.load(r"/data/rj21/MyoSeg/Models/net_v1_4.pt")
+# net = Unet_2D.UNet(enc_chs=(1,64,128,256,512), dec_chs=(512,256,128,64), out_sz=(128,128), retain_dim=False, num_class=2)
+net = torch.load(r"/data/rj21/MyoSeg/Models/net_v1_4.pt")
 
 net = net.cuda()
 optimizer = optim.Adam(net.parameters(), lr=0.00024, weight_decay=0.00001)

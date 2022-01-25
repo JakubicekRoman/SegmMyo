@@ -69,9 +69,10 @@ data_list_test = CreateDataset7(os.path.normpath( path_data ))
 
 
 # net = torch.load(r"/data/rj21/MyoSeg/Models/net_v1_5.pt")
-net = torch.load(r"/data/rj21/MyoSeg/Models/net_v2_2.pt")
+net = torch.load(r"/data/rj21/MyoSeg/Models/net_v2_1.pt")
 net = net.cuda()
 
+# path_save = '/data/rj21/MyoSeg/valid/Main_2'
 path_save = '/data/rj21/MyoSeg/valid'
 
 res_table = pd.DataFrame(data=[], columns=['Name','ID_pat','Slice' ,'Dataset','Seq', 'Dice','HD'] )                                         
@@ -102,18 +103,23 @@ for num in range(0,len(data_list_test),1):
     img = Util.crop_center(img, new_width=128, new_height=128)
     mask = Util.crop_center(mask, new_width=128, new_height=128)
     
-    # print(np.shape(img))
+    img = torch.tensor(np.expand_dims(img, 0).astype(np.float32))
+    mask = torch.tensor(np.expand_dims(mask, 0).astype(np.float32))
     
-    # Fig = plt.figure()
-    # plt.imshow(img, cmap='gray')
-    # plt.imshow(mask*0.2, cmap='cool', alpha=0.2)
-    # plt.show()
+    # params=[]
+    # params.append({'Output_size': 128,
+    #                'Crop_size': random.randint(80,80),
+    #                'Angle': random.randint(0,0),
+    #                'Transl': (random.randint(0,0),random.randint(0,0)),
+    #                'Scale': random.uniform(1.2,1.2)
+    #                })
+    # img = Util.augmentation2(img, params)
+    # mask = Util.augmentation2(mask, params)
+    # mask = mask>0.25
     
-    img = np.expand_dims(img, 0).astype(np.float32)
-    Imgs[0,0,:,:] = torch.tensor(img)
     
-    mask = np.expand_dims(mask, 0).astype(np.float32)
-    Masks[0,0,:,:] = torch.tensor(mask)
+    Imgs[0,0,:,:] = img
+    Masks[0,0,:,:] = mask
     
     
     with torch.no_grad(): 
@@ -135,12 +141,9 @@ for num in range(0,len(data_list_test),1):
     res_table.loc[(num,'Dataset')] =   file_name.split('_')[0] 
     res_table.loc[(num,'Seq')] =   file_name.split('_')[1] 
     res_table.loc[(num,'HD')] =   HD     
-    res_table.loc[(num,'Dice')] =   dice.detach().cpu().numpy()
+    res_table.loc[(num,'Dice')] =   dice.item()
     
     # print(data_list_test[num]['file_name'])
-
-Util.save_to_excel(res_table, path_save + '/' , 'ResultsDet')
-
 
     # resB = (res[0,0,:,:].detach().cpu().numpy()>0.5).astype(np.dtype('uint8'))
     # dimg = cv2.dilate(resB, cv2.getStructuringElement(cv2.MORPH_ELLIPSE,(3,3)) )
@@ -156,17 +159,17 @@ Util.save_to_excel(res_table, path_save + '/' , 'ResultsDet')
     
     # comp = RGB_imgB[:,:,0]
     # comp[ctr==1]=1
-    # # comp[ctrGT==1]=0
+    # comp[ctrGT==1]=0
     # RGB_imgB[:,:,0] = comp
     
     # comp = RGB_imgB[:,:,1]
     # comp[ctr==1]=0
-    # # comp[ctrGT==1]=1
+    # comp[ctrGT==1]=1
     # RGB_imgB[:,:,1] = comp
     
     # comp = RGB_imgB[:,:,2]
     # comp[ctr==1]=0
-    # # comp[ctrGT==1]=0
+    # comp[ctrGT==1]=0
     # RGB_imgB[:,:,2] = comp
     
     # Fig = plt.figure()
@@ -175,7 +178,7 @@ Util.save_to_excel(res_table, path_save + '/' , 'ResultsDet')
     # plt.show()
     # plt.draw()
     
-    # # Fig.savefig( path_save + '/' + 'res_' + nPat +  '_'  + str(current_index) + '.png')
+    # Fig.savefig( path_save + '/' + 'res_' + nPat +  '_'  + str(current_index) + '.png')
     # plt.close(Fig)
     
     # Fig = plt.figure()
@@ -184,6 +187,7 @@ Util.save_to_excel(res_table, path_save + '/' , 'ResultsDet')
     # plt.show()
     # plt.draw()
     
-    # # Fig.savefig( path_save + '/' + 'res_' + nPat +  '_'  + str(current_index) + '_orig.png')
+    # Fig.savefig( path_save + '/' + 'res_' + nPat +  '_'  + str(current_index) + '_orig.png')
     # plt.close(Fig)
     
+Util.save_to_excel(res_table, path_save + '/' , 'Results_v2_1')

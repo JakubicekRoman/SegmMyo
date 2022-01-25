@@ -14,13 +14,16 @@ class Block(nn.Module):
         self.conv1 = nn.Conv2d(in_ch, out_ch, 3, padding=1, padding_mode='replicate')
         self.relu  = nn.ReLU()
         self.conv2 = nn.Conv2d(out_ch, out_ch, 3, padding=1, padding_mode='replicate')
+        # self.conv3 = nn.Conv2d(out_ch, out_ch, 3, padding=1, padding_mode='replicate')
         self.BN    = nn.BatchNorm2d(in_ch)
     
     def forward(self, x):
         x = self.conv1(self.BN(x))
         res = x
+        # x = self.conv3(self.conv2(x))
         x = self.conv2(x)
         return self.relu(x) + res
+        # return self.relu(x)
 
 
 class Encoder(nn.Module):
@@ -36,7 +39,7 @@ class Encoder(nn.Module):
         x = (x - m[:,:,None, None]) / s[:,:,None,None]
         for block in self.enc_blocks:
             x = block(x)
-            ftrs.append(x)    
+            ftrs.append(x)
             x = self.pool(x)
         return ftrs
 
