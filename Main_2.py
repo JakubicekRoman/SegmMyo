@@ -140,6 +140,8 @@ for epch in range(0,80):
         dice = Util.dice_coef( res[:,0,:,:]>0.25, Masks[:,0,:,:].cuda() )                
         diceTr.append(dice.detach().cpu().numpy())
         
+        
+        
         torch.cuda.empty_cache()
 
 

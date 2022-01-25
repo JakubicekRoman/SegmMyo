@@ -6,6 +6,7 @@ import xlsxwriter
 import pandas as pd
 import pydicom as dcm
 import torchvision.transforms as T
+import cv2
 
 import Loaders
 
@@ -111,6 +112,19 @@ def dice_coef(X, Y):
     eps = 0.000001
     dice = ((2. * torch.sum(X*Y) + eps) / (torch.sum(X) + torch.sum(Y) + eps) )
     return dice
+
+def MASD_compute(A, B):
+    
+    A  = A.astype(np.dtype('uint8'))
+    A_ctr = A - cv2.dilate(A, cv2.getStructuringElement(cv2.MORPH_ELLIPSE,(3,3)) )
+    distA = cv2.distanceTransform(255-A_ctr, cv2.DIST_L2, 3)
+    
+    B  = B.astype(np.dtype('uint8'))
+    B_ctr = B - cv2.dilate(B, cv2.getStructuringElement(cv2.MORPH_ELLIPSE,(3,3)) )
+    
+    HD = np.mean(distA[B_ctr>0])  
+
+    return HD
 
 
 def CreateDataset(path_data, ):      
