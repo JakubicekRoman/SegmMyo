@@ -23,6 +23,7 @@ import Unet_2D
 
 def CreateDataset7(path_data):
     data_list_tr = []
+    iii=0
     p = os.listdir(path_data)
     for ii in range(0,len(p)):
         pat_name = p[ii]
@@ -48,8 +49,10 @@ def CreateDataset7(path_data):
                                               'pat_name': pat_name,
                                               'file_name': name,
                                               'slice': name[-7:-4],
-                                              'ID_pat': ii
+                                              'ID_pat': ii,
+                                              'ID_scan': iii
                                               } )
+                    iii+=1
             
     return data_list_tr
 
@@ -67,7 +70,7 @@ data_list_test = CreateDataset7(os.path.normpath( path_data ))
 # data_list_test = pickle.load(open_file)
 # open_file.close()
 
-version = "v2_3"
+version = "v2_1"
 # net = torch.load(r"/data/rj21/MyoSeg/Models/net_v1_5.pt")
 net = torch.load(r"/data/rj21/MyoSeg/Models/net_" + version + ".pt")
 net = net.cuda()
@@ -108,11 +111,11 @@ for num in range(0,len(data_list_test),1):
     
     # params=[]
     # params.append({'Output_size': 128,
-    #                'Crop_size': random.randint(80,80),
-    #                'Angle': random.randint(0,0),
-    #                'Transl': (random.randint(0,0),random.randint(0,0)),
-    #                'Scale': random.uniform(1.2,1.2)
-    #                })
+    #                 'Crop_size': random.randint(80,80),
+    #                 'Angle': random.randint(0,0),
+    #                 'Transl': (random.randint(0,0),random.randint(0,0)),
+    #                 'Scale': random.uniform(1.0,1.0)
+    #                 })
     # img = Util.augmentation2(img, params)
     # mask = Util.augmentation2(mask, params)
     # mask = mask>0.25
@@ -137,57 +140,59 @@ for num in range(0,len(data_list_test),1):
     
     res_table.loc[(num,'Name')] =   nPat 
     res_table.loc[(num,'ID_pat')] =   data_list_test[num]['ID_pat'] 
+    res_table.loc[(num,'ID_scan')] = data_list_test[num]['ID_scan']
     res_table.loc[(num,'Slice')] =   current_index 
     res_table.loc[(num,'Dataset')] =   file_name.split('_')[0] 
     res_table.loc[(num,'Seq')] =   file_name.split('_')[1] 
     res_table.loc[(num,'HD')] =   HD     
     res_table.loc[(num,'Dice')] =   dice.item()
+
     
     # print(data_list_test[num]['file_name'])
 
-    # resB = (res[0,0,:,:].detach().cpu().numpy()>0.5).astype(np.dtype('uint8'))
-    # dimg = cv2.dilate(resB, cv2.getStructuringElement(cv2.MORPH_ELLIPSE,(3,3)) )
-    # ctr = dimg - resB
+    resB = (res[0,0,:,:].detach().cpu().numpy()>0.5).astype(np.dtype('uint8'))
+    dimg = cv2.dilate(resB, cv2.getStructuringElement(cv2.MORPH_ELLIPSE,(3,3)) )
+    ctr = dimg - resB
     
-    # GT = (Masks[0,0,:,:].detach().cpu().numpy()>0.5).astype(np.dtype('uint8'))
-    # dimg = cv2.dilate(GT, cv2.getStructuringElement(cv2.MORPH_ELLIPSE,(3,3)) )
-    # ctrGT = dimg - GT
+    GT = (Masks[0,0,:,:].detach().cpu().numpy()>0.5).astype(np.dtype('uint8'))
+    dimg = cv2.dilate(GT, cv2.getStructuringElement(cv2.MORPH_ELLIPSE,(3,3)) )
+    ctrGT = dimg - GT
     
-    # imgB = Imgs[0,0,:,:].detach().numpy()
-    # imgB = ( imgB - imgB.min() ) / (imgB.max() - imgB.min())
-    # RGB_imgB = cv2.cvtColor(imgB,cv2.COLOR_GRAY2RGB)
+    imgB = Imgs[0,0,:,:].detach().numpy()
+    imgB = ( imgB - imgB.min() ) / (imgB.max() - imgB.min())
+    RGB_imgB = cv2.cvtColor(imgB,cv2.COLOR_GRAY2RGB)
     
-    # comp = RGB_imgB[:,:,0]
-    # comp[ctr==1]=1
-    # comp[ctrGT==1]=0
-    # RGB_imgB[:,:,0] = comp
+    comp = RGB_imgB[:,:,0]
+    comp[ctr==1]=1
+    comp[ctrGT==1]=0
+    RGB_imgB[:,:,0] = comp
     
-    # comp = RGB_imgB[:,:,1]
-    # comp[ctr==1]=0
-    # comp[ctrGT==1]=1
-    # RGB_imgB[:,:,1] = comp
+    comp = RGB_imgB[:,:,1]
+    comp[ctr==1]=0
+    comp[ctrGT==1]=1
+    RGB_imgB[:,:,1] = comp
     
-    # comp = RGB_imgB[:,:,2]
-    # comp[ctr==1]=0
-    # comp[ctrGT==1]=0
-    # RGB_imgB[:,:,2] = comp
+    comp = RGB_imgB[:,:,2]
+    comp[ctr==1]=0
+    comp[ctrGT==1]=0
+    RGB_imgB[:,:,2] = comp
     
-    # Fig = plt.figure()
-    # plt.imshow(RGB_imgB)
+    Fig = plt.figure()
+    plt.imshow(RGB_imgB)
     
-    # plt.show()
-    # plt.draw()
+    plt.show()
+    plt.draw()
     
-    # # Fig.savefig( path_save + '/' + 'res_' + nPat +  '_'  + str(current_index) + '.png')
-    # plt.close(Fig)
+    # Fig.savefig( path_save + '/' + 'res_' + nPat +  '_'  + str(current_index) + '.png')
+    plt.close(Fig)
     
-    # Fig = plt.figure()
-    # plt.imshow(imgB, cmap='gray')
+    Fig = plt.figure()
+    plt.imshow(imgB, cmap='gray')
     
-    # plt.show()
-    # plt.draw()
+    plt.show()
+    plt.draw()
     
-    # # Fig.savefig( path_save + '/' + 'res_' + nPat +  '_'  + str(current_index) + '_orig.png')
-    # plt.close(Fig)
+    # Fig.savefig( path_save + '/' + 'res_' + nPat +  '_'  + str(current_index) + '_orig.png')
+    plt.close(Fig)
     
-Util.save_to_excel(res_table, path_save + '/' , 'Results_' + version)
+Util.save_to_excel(res_table, path_save + '/' , 'Results_' + version + '_all')
