@@ -21,12 +21,12 @@ import Unet_2D
 
 
 # net = Unet_2D.UNet(enc_chs=(1,64,128,256,512), dec_chs=(512,256,128,64), out_sz=(128,128), retain_dim=False, num_class=2)
-net = torch.load(r"/data/rj21/MyoSeg/Models/net_v1_4.pt")
+net = torch.load(r"/data/rj21/MyoSeg/Models/net_v1_6.pt")
 
 net = net.cuda()
-optimizer = optim.Adam(net.parameters(), lr=0.00024, weight_decay=0.00001)
+optimizer = optim.Adam(net.parameters(), lr=0.00054, weight_decay=0.00001)
 # optimizer = optim.SGD(net2.parameters(), lr=0.000001, weight_decay=0.0001, momentum= 0.8)
-scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=20, gamma=0.1, verbose=True)
+scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=20, gamma=0.5, verbose=True)
 
 
 file_name = "data_list_Data2_all_dcm.pkl"
@@ -81,7 +81,7 @@ for epch in range(0,80):
             params.append({'Output_size': 128,
                            'Crop_size': random.randint(80,128),
                            'Angle': random.randint(-170,170),
-                           'Transl': (random.randint(-20,20),random.randint(-20,20)),
+                           'Transl': (random.randint(-10,10),random.randint(-10,10)),
                            'Scale': random.uniform(1.0,1.4)
                            })
 
@@ -171,22 +171,23 @@ for epch in range(0,80):
             mask = dataset.pixel_array
             mask = mask==1
         
-            # img, transl = Util.augmentation(img, new_width=128, new_height=128, rand_tr='None')
-            # mask, _  = Util.augmentation(mask, new_width=128, new_height=128, rand_tr = transl)
-            img = np.expand_dims(img, 0).astype(np.float32)
-            mask = np.expand_dims(mask, 0).astype(np.float32)
+            img, transl = Util.augmentation(img, new_width=128, new_height=128, rand_tr='None')
+            mask, _  = Util.augmentation(mask, new_width=128, new_height=128, rand_tr = transl)
             
-            params=[]
-            params.append({'Output_size': 128,
-                           'Crop_size': random.randint(80,80),
-                           'Angle': random.randint(0,0),
-                           'Transl': (random.randint(0,0),random.randint(0,0)),
-                           'Scale': random.uniform(1.2,1.2)
-                           })
+            img = torch.tensor(np.expand_dims(img, 0).astype(np.float32))
+            mask = torch.tensor(np.expand_dims(mask, 0).astype(np.float32))
             
-            img = Util.augmentation2(torch.tensor(img), params)
-            mask = Util.augmentation2(torch.tensor(mask), params)
-            mask = mask>0.25
+            # params=[]
+            # params.append({'Output_size': 128,
+            #                'Crop_size': random.randint(80,80),
+            #                'Angle': random.randint(0,0),
+            #                'Transl': (random.randint(0,0),random.randint(0,0)),
+            #                'Scale': random.uniform(1.2,1.2)
+            #                })
+            
+            # img = Util.augmentation2(img, params)
+            # mask = Util.augmentation2(mask, params)
+            # mask = mask>0.25
     
             Imgs[b,0,:,:] = img
             Masks[b,0,:,:] = mask
@@ -203,6 +204,7 @@ for epch in range(0,80):
     
     train_Dice.append(np.mean(diceTr))
     test_Dice.append(np.mean(diceTe))
+    
     print(np.mean(diceTe))
     
     plt.figure

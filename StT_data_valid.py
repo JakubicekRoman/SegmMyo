@@ -67,9 +67,9 @@ data_list_test = CreateDataset7(os.path.normpath( path_data ))
 # data_list_test = pickle.load(open_file)
 # open_file.close()
 
-
+version = "v2_3"
 # net = torch.load(r"/data/rj21/MyoSeg/Models/net_v1_5.pt")
-net = torch.load(r"/data/rj21/MyoSeg/Models/net_v2_1.pt")
+net = torch.load(r"/data/rj21/MyoSeg/Models/net_" + version + ".pt")
 net = net.cuda()
 
 # path_save = '/data/rj21/MyoSeg/valid/Main_2'
@@ -178,7 +178,7 @@ for num in range(0,len(data_list_test),1):
     # plt.show()
     # plt.draw()
     
-    # Fig.savefig( path_save + '/' + 'res_' + nPat +  '_'  + str(current_index) + '.png')
+    # # Fig.savefig( path_save + '/' + 'res_' + nPat +  '_'  + str(current_index) + '.png')
     # plt.close(Fig)
     
     # Fig = plt.figure()
@@ -187,7 +187,7 @@ for num in range(0,len(data_list_test),1):
     # plt.show()
     # plt.draw()
     
-    # Fig.savefig( path_save + '/' + 'res_' + nPat +  '_'  + str(current_index) + '_orig.png')
+    # # Fig.savefig( path_save + '/' + 'res_' + nPat +  '_'  + str(current_index) + '_orig.png')
     # plt.close(Fig)
     
-Util.save_to_excel(res_table, path_save + '/' , 'Results_v2_1')
+Util.save_to_excel(res_table, path_save + '/' , 'Results_' + version)
