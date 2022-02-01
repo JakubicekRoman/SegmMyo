@@ -66,10 +66,23 @@ class Decoder(nn.Module):
         return enc_ftrs
 
 
+class BottleNeck(nn.Module):
+    def __init__(self, chs=(1024,1024) ):
+        super().__init__()
+        self.conv1x1_1 =  nn.Conv2d(chs[0], chs[1], 1, padding=0, padding_mode='replicate')     
+        self.conv1x1_2 =  nn.Conv2d(chs[0], chs[1], 1, padding=0, padding_mode='replicate')     
+        self.DP =  nn.Dropout(p=0.2)
+    def forward(self, x):
+        
+        return self.conv1x1_2(self.DP(self.conv1x1_1(x)))
+   
+
+
 class UNet(nn.Module):
     def __init__(self, enc_chs=(3,64,128,256,512,1024), dec_chs=(1024, 512, 256, 128, 64), num_class=1, retain_dim=False, out_sz=(572,572)):
         super().__init__()
         self.encoder     = Encoder(enc_chs)
+        self.bottleneck  = BottleNeck((enc_chs[-1],enc_chs[-1]))
         self.decoder     = Decoder(dec_chs)
         self.head        = nn.Conv2d(dec_chs[-1], num_class, 1)
         self.retain_dim  = retain_dim
@@ -77,7 +90,8 @@ class UNet(nn.Module):
 
     def forward(self, x):
         enc_ftrs = self.encoder(x)
-        out      = self.decoder(enc_ftrs[::-1][0], enc_ftrs[::-1][1:])
+        OutBN = self.bottleneck(enc_ftrs[::-1][0])
+        out      = self.decoder(OutBN, enc_ftrs[::-1][1:])
         out      = self.head(out)
         if self.retain_dim:
             out = F.interpolate(out, self.out_sz)
