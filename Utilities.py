@@ -233,6 +233,42 @@ def CreateDatasetOur(path_data ):
 
 
 
+def CreateDataset_StT_dcm(path_data):
+    data_list_tr = []
+    iii=0
+    p = os.listdir(path_data)
+    for ii in range(0,len(p)):
+        pat_name = p[ii]
+        f = os.listdir(os.path.join(path_data, pat_name))
+        for _,file in enumerate(f):
+            if file.find('_gt')>0:
+                if file.find('_W')>=0:
+                    path_mask = os.path.join(path_data, pat_name, file)
+                    name = file[0:file.find('_gt')] + file[file.find('_gt')+3:]
+                    # path_maps = os.path.join(path_data, pat_name, name+'.nii.gz')
+                    path_maps = os.path.join(path_data, pat_name, name)
+
+                    # sizeData = Loaders.size( path_maps )
+                    sizeData = Loaders.size_nii( path_maps )
+
+                    if len(sizeData)==2:
+                        sizeData = sizeData + (1,)
+                    # print(sizeData)
+                    
+                    for sl in range(0,sizeData[2]):
+                        data_list_tr.append( {'img_path': path_maps,
+                                              'mask_path': path_mask,
+                                              'pat_name': pat_name,
+                                              'file_name': name,
+                                              'slice': name[-7:-4],
+                                              'ID_pat': ii,
+                                              'ID_scan': iii
+                                              } )
+                    iii+=1
+            
+    return data_list_tr
+
+
 def save_to_excel(dataframe, root_dir, name):
     writer = pd.ExcelWriter(os.path.join(root_dir, '{}.xlsx'.format(name)),
     engine='xlsxwriter',
