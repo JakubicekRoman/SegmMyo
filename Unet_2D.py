@@ -1,5 +1,5 @@
 ## U-net
- # for version 2_1
+ # for version 2
 
 # import numpy as np
 import torch.nn as nn
