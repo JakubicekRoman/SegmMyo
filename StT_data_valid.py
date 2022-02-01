@@ -75,15 +75,17 @@ version = "v2_1"
 net = torch.load(r"/data/rj21/MyoSeg/Models/net_" + version + ".pt")
 net = net.cuda()
 
-# path_save = '/data/rj21/MyoSeg/valid/Main_2'
-path_save = '/data/rj21/MyoSeg/valid'
+path_save = '/data/rj21/MyoSeg/valid/Main_2'
+# path_save = '/data/rj21/MyoSeg/valid'
 
-res_table = pd.DataFrame(data=[], columns=['Name','ID_pat','Slice' ,'Dataset','Seq', 'Dice','HD'] )                                         
+res_table = pd.DataFrame(data=[], columns=['Name','ID_pat','Slice' ,'Dataset','Seq', 'Dice','HD', 'ID_image'] )                                         
 
-diceTe=[];
+diceTe=[]
+vel=[]
+iii=0
 
 for num in range(0,len(data_list_test),1):
-# for num in range(22,23,1):    
+# for num in range(0,100,1):    
 
     Imgs = torch.tensor(np.zeros((1,1,128,128) ), dtype=torch.float32)
     Masks = torch.tensor(np.zeros((1,2,128,128) ), dtype=torch.float32)
@@ -102,6 +104,8 @@ for num in range(0,len(data_list_test),1):
     dataset = dcm.dcmread(mask_path)
     mask = dataset.pixel_array
     mask = mask==1
+    
+    vel.append(img.shape)
     
     img = Util.crop_center(img, new_width=128, new_height=128)
     mask = Util.crop_center(mask, new_width=128, new_height=128)
@@ -146,6 +150,7 @@ for num in range(0,len(data_list_test),1):
     res_table.loc[(num,'Seq')] =   file_name.split('_')[1] 
     res_table.loc[(num,'HD')] =   HD     
     res_table.loc[(num,'Dice')] =   dice.item()
+    res_table.loc[(num,'ID_image')] =   iii
 
     
     # print(data_list_test[num]['file_name'])
@@ -180,19 +185,23 @@ for num in range(0,len(data_list_test),1):
     Fig = plt.figure()
     plt.imshow(RGB_imgB)
     
-    plt.show()
-    plt.draw()
+    # plt.show()
+    # plt.draw()
     
-    # Fig.savefig( path_save + '/' + 'res_' + nPat +  '_'  + str(current_index) + '.png')
+    ID_image = '000000'+str(iii)
+    ID_image = ID_image[-4:]
+    iii=iii+1
+    
+    Fig.savefig( path_save + '/' + 'res_' +  ID_image + '.png', dpi=150)
     plt.close(Fig)
     
     Fig = plt.figure()
     plt.imshow(imgB, cmap='gray')
     
-    plt.show()
-    plt.draw()
+    # plt.show()
+    # plt.draw()
     
-    # Fig.savefig( path_save + '/' + 'res_' + nPat +  '_'  + str(current_index) + '_orig.png')
+    Fig.savefig( path_save + '/' + 'res_' + ID_image  + '_orig.png', dpi=150)
     plt.close(Fig)
     
 Util.save_to_excel(res_table, path_save + '/' , 'Results_' + version + '_all')

@@ -1,0 +1,19 @@
+Install Anaconda3
+conda init
+
+folder with program --  /data/rj21/MyoSeg
+
+open Terminal in directory with program files
+
+conda env list
+
+conda activate MyoSeg
+
+python
+
+import MyoSeg
+
+MyoSeg.Predict(path_data,path_save)
+
+# Example
+MyoSeg.Predict( '/data/rj21/Data/Test_data/example_data' , '/data/rj21/Data/Test_data/Results' )
