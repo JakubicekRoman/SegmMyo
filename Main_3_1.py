@@ -23,30 +23,29 @@ net = Network.Net(enc_chs=(1,16,32,64,128,256), dec_chs=(256,128,64,32,16), out_
 # net = torch.load(r"/data/rj21/MyoSeg/Models/net_v2_1.pt")
 
 net = net.cuda()
-optimizer = optim.Adam(net.parameters(), lr=0.00024, weight_decay=0.00001)
+optimizer = optim.Adam(net.parameters(), lr=0.00024, weight_decay=0.000001)
 # optimizer = optim.SGD(net2.parameters(), lr=0.000001, weight_decay=0.0001, momentum= 0.8)
 scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=40, gamma=0.1, verbose=True)
 
-
-path_data = '/data/rj21/Data/Data3/Resaved_data_StT_cropped'  # Linux bioeng358
+## StT LABELLED
+path_data = '/data/rj21/Data/Data_StT_Labelled/Resaved_data_StT_cropped'  # Linux bioeng358
 data_list_test = Util.CreateDataset_StT_dcm(os.path.normpath( path_data ))
 
 b = int(len(data_list_test)*0.7)
 data_list_1_train = data_list_test[1:b]
 data_list_1_test = data_list_test[b+1:-1]
 
-
+## ACDC
 path_data = '/data/rj21/Data/Data_ACDC/training'  # Linux bioeng358
-# path_data = 'D:\jakubicek\SegmMyo\Data_ACDC\\training'  # Win CUDA2
 data_list_2_train, data_list_2_test = Util.CreateDataset(os.path.normpath( path_data ))
 
-# file_name = "data_list_Data3_all_dcm.pkl"
-# open_file = open(file_name, "wb")
-# pickle.dump(data_list_test, open_file)
-# open_file.close()
-# open_file = open(file_name, "rb")
-# data_list_test = pickle.load(open_file)
-# open_file.close()
+## StT UNLABELLED
+path_data = '/data/rj21/Data/Data_StT_Unlabeled'  # Linux bioeng358
+data_list_3_train = Util.CreateDataset_StT_UnL_dcm(os.path.normpath( path_data ))
+
+b = int(len(data_list_3_train)*0.7)
+data_list_3_test = data_list_3_train[b+1:-1]
+data_list_3_train = data_list_3_train[1:b]
 
 
 diceTr_Joint=[]
@@ -55,7 +54,7 @@ diceTr_cons=[]
 # train_loss_Joint=[]
 # train_loss_ACDC=[]
 
-for epch in range(0,50):
+for epch in range(0,80):
     random.shuffle(data_list_1_train)
     net.train(mode=True)
     batch = 16
@@ -93,11 +92,13 @@ for epch in range(0,50):
     
     
     ## Consistency regularizzation
-        loss_cons = Network.Training.Consistency(sub_set, net, params, TrainMode=True)
-        diceTr3.append(loss_cons.detach().cpu().numpy())
+        Indx = np.random.randint(0,len(data_list_3_train),(batch,)).tolist()
+        sub_set = list(map(data_list_3_train.__getitem__, Indx))
+        loss_cons, Imgs_P, res, res_P = Network.Training.Consistency(sub_set, net, params, TrainMode=True)
+        diceTr3.append(1 - loss_cons.detach().cpu().numpy())
         
     ## backF - training
-        loss = loss_Joint + 0.05*loss_ACDC
+        loss = loss_Joint + 0.05*loss_ACDC + 0.01*loss_cons
         optimizer.zero_grad()
         loss.backward()
         # torch.nn.utils.clip_grad_value_(net.parameters(), clip_value=1.0)
@@ -130,10 +131,25 @@ for epch in range(0,50):
 
     # print(np.mean(diceTe))
     
+    # plt.figure
+    # plt.imshow(Imgs1[2,0,:,:].detach().numpy(), cmap='gray')
+    # plt.imshow(res1[2,1,:,:].detach().cpu().numpy(), cmap='jet', alpha=0.2)
+    # plt.show()
+    
     plt.figure
-    plt.imshow(Imgs1[2,0,:,:].detach().numpy(), cmap='gray')
-    plt.imshow(res1[2,1,:,:].detach().cpu().numpy(), cmap='jet', alpha=0.2)
+    plt.imshow(Imgs_P[0,0,:,:].detach().numpy(), cmap='gray')
+    plt.imshow(res[0,0,:,:].detach().cpu().numpy(), cmap='jet', alpha=0.2)
     plt.show()
+    
+    plt.figure
+    plt.imshow(Imgs_P[0,0,:,:].detach().numpy(), cmap='gray')
+    plt.imshow(res_P[0,0,:,:].detach().cpu().numpy(), cmap='jet', alpha=0.2)
+    plt.show()
+    
+    # plt.figure
+    # plt.imshow(res[0,0,:,:].detach().cpu().numpy(), cmap='jet', alpha=0.2)
+    # plt.imshow(res_P[0,0,:,:].detach().cpu().numpy(), cmap='jet', alpha=0.2)
+    # plt.show()
     
     # plt.figure
     # plt.plot(train_loss_Joint)
@@ -146,4 +162,8 @@ for epch in range(0,50):
     plt.plot(diceTr_ACDC)
     plt.plot(diceTr_cons)
     plt.show()
+    
+    # plt.figure
+    # plt.plot(diceTr_cons)
+    # plt.show()
 

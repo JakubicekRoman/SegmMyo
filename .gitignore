@@ -5,6 +5,6 @@ Data_ACDC/
 Models/
 valid/
 Export/exported_images/
-final/Results/
-*.pt
+Final/Results/
+Final/*.pt
 __pycache__/

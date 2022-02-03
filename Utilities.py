@@ -316,6 +316,34 @@ def CreateDataset_StT_dcm(path_data):
             
     return data_list_tr
 
+def CreateDataset_StT_UnL_dcm(path_data):
+    data_list_tr = []
+    p = os.listdir(path_data)
+    for ii in range(0,len(p)):
+        pat_name = p[ii]
+        pthX = os.path.join(path_data, pat_name)
+        if os.path.isdir(pthX):
+            f = os.listdir(pthX)
+            for _,sf in enumerate(f):
+                pth = os.path.join(path_data, pat_name, sf)
+                if os.path.isdir(pth):
+                        ff = os.listdir(pth)  
+                        for sl,file in enumerate(ff):
+                            if file.find('.dcm')>=0:
+                                pth2 = os.path.join(path_data, pat_name, sf, file)
+                                data_list_tr.append( {'img_path': pth2,
+                                                      'mask_path': pth2,
+                                                      'pat_name': pat_name,
+                                                      'file_name': sf,
+                                                      'slice': sl
+                                                      # 'ID_pat': ii,
+                                                      # 'ID_scan': iii
+                                                      } )
+                                # iii+=1
+            
+    return data_list_tr
+
+
 
 def save_to_excel(dataframe, root_dir, name):
     writer = pd.ExcelWriter(os.path.join(root_dir, '{}.xlsx'.format(name)),
