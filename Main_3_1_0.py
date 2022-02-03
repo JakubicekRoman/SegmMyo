@@ -29,11 +29,11 @@ scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=40, gamma=0.1, verbos
 
 ## StT LABELLED
 path_data = '/data/rj21/Data/Data_StT_Labelled/Resaved_data_StT_cropped'  # Linux bioeng358
-data_list_test = Util.CreateDataset_StT_dcm(os.path.normpath( path_data ))
+data_list = Util.CreateDataset_StT_dcm(os.path.normpath( path_data ))
 
-b = int(len(data_list_test)*0.7)
-data_list_1_train = data_list_test[1:b]
-data_list_1_test = data_list_test[b+1:-1]
+b = int(len(data_list)*0.7)
+data_list_1_train = data_list[1:b]
+data_list_1_test = data_list[b+1:-1]
 
 ## ACDC
 path_data = '/data/rj21/Data/Data_ACDC/training'  # Linux bioeng358
@@ -41,30 +41,34 @@ data_list_2_train, data_list_2_test = Util.CreateDataset(os.path.normpath( path_
 
 ## StT UNLABELLED
 path_data = '/data/rj21/Data/Data_StT_Unlabeled'  # Linux bioeng358
-data_list_3_train = Util.CreateDataset_StT_UnL_dcm(os.path.normpath( path_data ))
+data_list = Util.CreateDataset_StT_UnL_dcm(os.path.normpath( path_data ))
 
-b = int(len(data_list_3_train)*0.7)
-data_list_3_test = data_list_3_train[b+1:-1]
-data_list_3_train = data_list_3_train[1:b]
+b = int(len(data_list)*0.7)
+data_list_3_test = data_list[b+1:-1]
+data_list_3_train = data_list[1:b]
 
 
 diceTr_Joint=[]
 diceTr_ACDC=[]
 diceTr_cons=[]
+diceTe1_Joint=[]
 # train_loss_Joint=[]
 # train_loss_ACDC=[]
 
 for epch in range(0,80):
     random.shuffle(data_list_1_train)
+    random.shuffle(data_list_2_train)
+    random.shuffle(data_list_3_train)
     net.train(mode=True)
     batch = 16
     diceTr1=[]
     diceTr2=[]
     diceTr3=[]
+    diceTe1=[]
         
     # for num_ite in range(0,len(data_list_1_train)-batch-1, batch):
     # for num_ite in range(0,len(data_list_1_train)/batch):
-    for num_ite in range(0,40):
+    for num_ite in range(0,100):
       
     ### Pro StT our dataset JOINT
         # sub_set = data_list_1_train[num:num+batch]
@@ -92,13 +96,13 @@ for epch in range(0,80):
     
     
     ## Consistency regularizzation
-        Indx = np.random.randint(0,len(data_list_3_train),(batch,)).tolist()
-        sub_set = list(map(data_list_3_train.__getitem__, Indx))
+        Indx = np.random.randint(0,len(data_list_1_train),(batch,)).tolist()
+        sub_set = list(map(data_list_1_train.__getitem__, Indx))
         loss_cons, Imgs_P, res, res_P = Network.Training.Consistency(sub_set, net, params, TrainMode=True)
         diceTr3.append(1 - loss_cons.detach().cpu().numpy())
         
     ## backF - training
-        loss = loss_Joint + 0.0001*loss_ACDC + 0.0001*loss_cons
+        loss = loss_Joint + 0.0001*loss_ACDC + 0.01*loss_cons
         optimizer.zero_grad()
         loss.backward()
         # torch.nn.utils.clip_grad_value_(net.parameters(), clip_value=1.0)
@@ -108,32 +112,35 @@ for epch in range(0,80):
     scheduler.step()
     
     
-    # batch = 200
-    # net.train(mode=False)
-    # random.shuffle(data_list_test)
+    batch = 512
+    net.train(mode=False)
+    random.shuffle(data_list_1_test)
 
-    # for num in range(0,len(data_list_test)-batch-1, batch):
-    #     sub_set = data_list_test[num:num+batch]
+    for num in range(0,len(data_list_1_test)-batch-1, batch):
+        sub_set = data_list_1_test[num:num+batch]
         
-    #     with torch.no_grad(): 
-    #         params = (128,  100,120,  -0,0,  -0,0,-0,0)
-    #         loss, res, Imgs, Masks = Network.Training.straightForward(sub_set, net, params, batch, TrainMode=False)
+        with torch.no_grad(): 
+            params = (128,  80,120,  -180,180,  -10,0,-10,0)
+            _, resTE, ImgsTe, MasksTE = Network.Training.straightForward(sub_set, net, params, TrainMode=False)
                  
                          
-    #     dice = Util.dice_coef( res[:,0,:,:]>0.5, Masks[:,0,:,:].cuda() )                
-    #     diceTe.append(dice.detach().cpu().numpy())
+        dice = Util.dice_coef( resTE[:,0,:,:]>0.5, MasksTE[:,0,:,:].cuda() )                
+        diceTe1.append(dice.detach().cpu().numpy())
         
-    #     torch.cuda.empty_cache()
+        torch.cuda.empty_cache()
+        
     
     diceTr_Joint.append(np.mean(diceTr1))
     diceTr_ACDC.append(np.mean(diceTr2))
     diceTr_cons.append(np.mean(diceTr3))
+    diceTe1_Joint.append(np.mean(diceTe1))
+
 
     # print(np.mean(diceTe))
     
     plt.figure
-    plt.imshow(Imgs1[2,0,:,:].detach().numpy(), cmap='gray')
-    plt.imshow(res1[2,1,:,:].detach().cpu().numpy(), cmap='jet', alpha=0.2)
+    plt.imshow(ImgsTe[0,0,:,:].detach().numpy(), cmap='gray')
+    plt.imshow(resTE[0,1,:,:].detach().cpu().numpy(), cmap='jet', alpha=0.2)
     plt.show()
     
     # plt.figure
@@ -161,6 +168,7 @@ for epch in range(0,80):
     plt.plot(diceTr_Joint)
     plt.plot(diceTr_ACDC)
     plt.plot(diceTr_cons)
+    plt.plot(diceTe1_Joint)
     plt.show()
     
     # plt.figure
