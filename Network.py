@@ -123,7 +123,7 @@ class Training():
                 img = dataset.pixel_array.astype(dtype='float32')
                 dataset = dcm.dcmread(mask_path)
                 mask = dataset.pixel_array
-                mask = mask==1
+                mask = mask==1  
         
             augm_params=[]
             augm_params.append({'Output_size': params[0],

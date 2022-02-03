@@ -83,7 +83,7 @@ def augmentation(img, new_width=None, new_height=None, rand_tr='Rand'):
             # print(rand_transl)
         elif rand_tr.find('None')>=0:
             rand_transl = (0, 0)
-    else:
+    else:  
         rand_transl = rand_tr
         
     

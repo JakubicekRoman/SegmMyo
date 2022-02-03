@@ -152,7 +152,7 @@ for epch in range(0,80):
     # plt.imshow(res_P[0,0,:,:].detach().cpu().numpy(), cmap='jet', alpha=0.2)
     # plt.show()
     
-    # plt.figure
+    # plt.figure  
     # plt.plot(train_loss_Joint)
     # plt.plot(train_loss_ACDC)
     # plt.ylim([0.0, 1.2])
