@@ -7,8 +7,41 @@ import pandas as pd
 import pydicom as dcm
 import torchvision.transforms as T
 import cv2
+import SimpleITK as sitk
 
-import Loaders
+
+# import Loaders
+
+
+def read_nii(file_name, current_index):
+    
+    file_reader = sitk.ImageFileReader()
+    file_reader.SetFileName(file_name)    
+    file_reader.ReadImageInformation()
+    sizeA=file_reader.GetSize()
+    
+    extract_size = (sizeA[0], sizeA[1], 1, 1)
+        
+    
+    file_reader.SetExtractIndex(current_index)
+    file_reader.SetExtractSize(extract_size)
+    
+    img = sitk.GetArrayFromImage(file_reader.Execute())
+    img = np.squeeze(img)
+    
+    # img = np.pad(img,((addX[2],addX[3]),(addX[0],addX[1]),(0,0)),'constant',constant_values=(-1024, -1024))
+
+
+    return img
+
+
+def size_nii(file_name):
+    file_reader = sitk.ImageFileReader()
+    file_reader.SetFileName(file_name)    
+    file_reader.ReadImageInformation()
+    sizeA=file_reader.GetSize()
+    
+    return sizeA
 
 
 def augmentation2(img, params):        
@@ -17,6 +50,10 @@ def augmentation2(img, params):
     scale = params[0]['Scale']
     shear = 0
     CenterCrop = params[0]['Crop_size']
+    flip = params[0]['Flip']
+    
+    if flip:
+        img = torch.flip(img, [len(img.size())-1])
     
     augm_img = T.functional.affine(img, angle, translate, scale, shear,  T.InterpolationMode('bilinear'))
     augm_img = T.CenterCrop(size=CenterCrop)(augm_img)
@@ -101,6 +138,17 @@ def crop_center(img, new_width=None, new_height=None):
         
     return center_cropped_img
 
+def resize_with_padding(img, expected_size):
+    delta_width = expected_size[0] - img.shape[0]
+    delta_height = expected_size[1] - img.shape[1]
+    pad_width = delta_width // 2
+    pad_height = delta_height // 2
+    padding = np.array([pad_width, pad_height, delta_width - pad_width, delta_height - pad_height])
+    padding[padding<0]=0
+    img = np.pad(img, [(padding[0], padding[2]), (padding[1], padding[3])], mode='constant')
+    img = crop_center(img, new_width=expected_size[0], new_height=expected_size[1])
+    return img
+
 
 def dice_loss(X, Y):
     eps = 0.00001
@@ -139,7 +187,7 @@ def CreateDataset(path_data, ):
             pat_name = os.path.join(path_data, dir_name)
             file_name = os.listdir(pat_name)
             
-            sizeData = Loaders.size_nii( os.path.join(pat_name, file_name[2] ) )
+            sizeData = size_nii( os.path.join(pat_name, file_name[2] ) )
             
             if pat<=80:
                 for ind_slice in range(0,sizeData[2]):
@@ -176,7 +224,7 @@ def CreateDataset_4D(path_data):
             pat_name = os.path.join(path_data, dir_name)
             file_name = os.listdir(pat_name)
             
-            sizeData = Loaders.size_nii( os.path.join(pat_name, file_name[1] ) )
+            sizeData = size_nii( os.path.join(pat_name, file_name[1] ) )
             
             for ind_slice in range(0,sizeData[2]):
             # for ind_slice in range(0,1):
@@ -209,7 +257,7 @@ def CreateDatasetOur(path_data ):
                 
                     dataset = dcm.dcmread( os.path.join( path1, slice_name ) )
                     t = dataset.SeriesDescription  
-                    sizeData = Loaders.size_nii( os.path.join( path1, slice_name ) )
+                    sizeData = size_nii( os.path.join( path1, slice_name ) )
                     
                     if  (np.array(sizeData[0:2])>127).all():
                     #     if t.find('T1')>=0:
@@ -249,7 +297,7 @@ def CreateDataset_StT_dcm(path_data):
                     path_maps = os.path.join(path_data, pat_name, name)
 
                     # sizeData = Loaders.size( path_maps )
-                    sizeData = Loaders.size_nii( path_maps )
+                    sizeData = size_nii( path_maps )
 
                     if len(sizeData)==2:
                         sizeData = sizeData + (1,)
@@ -281,5 +329,6 @@ def save_to_excel(dataframe, root_dir, name):
     worksheet.set_column('A:ZZ', 22)
     writer.save()
     
+ 
     
     
