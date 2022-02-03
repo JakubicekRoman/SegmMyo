@@ -18,8 +18,8 @@ import Utilities as Util
 import Network
 
 
-net = Network.Net(enc_chs=(1,16,32,64,128,256), dec_chs=(256,128,64,32,16), out_sz=(128,128), retain_dim=False, num_class=2)
-# net = torch.load(r"/data/rj21/MyoSeg/Models/net_v1_4.pt")
+# net = Network.Net(enc_chs=(1,16,32,64,128,256), dec_chs=(256,128,64,32,16), out_sz=(128,128), retain_dim=False, num_class=2)
+net = torch.load(r"/data/rj21/MyoSeg/Models/net_v3_0_0.pt")
 # net = torch.load(r"/data/rj21/MyoSeg/Models/net_v2_1.pt")
 
 net = net.cuda()
@@ -98,7 +98,7 @@ for epch in range(0,80):
         diceTr3.append(1 - loss_cons.detach().cpu().numpy())
         
     ## backF - training
-        loss = loss_Joint + 0.05*loss_ACDC + 0.01*loss_cons
+        loss = loss_Joint + 0.0001*loss_ACDC + 0.0001*loss_cons
         optimizer.zero_grad()
         loss.backward()
         # torch.nn.utils.clip_grad_value_(net.parameters(), clip_value=1.0)
@@ -131,20 +131,20 @@ for epch in range(0,80):
 
     # print(np.mean(diceTe))
     
+    plt.figure
+    plt.imshow(Imgs1[2,0,:,:].detach().numpy(), cmap='gray')
+    plt.imshow(res1[2,1,:,:].detach().cpu().numpy(), cmap='jet', alpha=0.2)
+    plt.show()
+    
     # plt.figure
-    # plt.imshow(Imgs1[2,0,:,:].detach().numpy(), cmap='gray')
-    # plt.imshow(res1[2,1,:,:].detach().cpu().numpy(), cmap='jet', alpha=0.2)
+    # plt.imshow(Imgs_P[0,0,:,:].detach().numpy(), cmap='gray')
+    # plt.imshow(res[0,0,:,:].detach().cpu().numpy(), cmap='jet', alpha=0.2)
     # plt.show()
     
-    plt.figure
-    plt.imshow(Imgs_P[0,0,:,:].detach().numpy(), cmap='gray')
-    plt.imshow(res[0,0,:,:].detach().cpu().numpy(), cmap='jet', alpha=0.2)
-    plt.show()
-    
-    plt.figure
-    plt.imshow(Imgs_P[0,0,:,:].detach().numpy(), cmap='gray')
-    plt.imshow(res_P[0,0,:,:].detach().cpu().numpy(), cmap='jet', alpha=0.2)
-    plt.show()
+    # plt.figure
+    # plt.imshow(Imgs_P[0,0,:,:].detach().numpy(), cmap='gray')
+    # plt.imshow(res_P[0,0,:,:].detach().cpu().numpy(), cmap='jet', alpha=0.2)
+    # plt.show()
     
     # plt.figure
     # plt.imshow(res[0,0,:,:].detach().cpu().numpy(), cmap='jet', alpha=0.2)
