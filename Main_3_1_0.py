@@ -82,27 +82,28 @@ for epch in range(0,80):
         dice = Util.dice_coef( res1[:,0,:,:]>0.5, Masks1[:,0,:,:].cuda() )                
         diceTr1.append(dice.detach().cpu().numpy())
     
-    ### Pro ACDC dataset
-        Indx = np.random.randint(0,len(data_list_2_train),(batch,)).tolist()
-        sub_set =list(map(data_list_2_train.__getitem__, Indx))
+    # ### Pro ACDC dataset
+    #     Indx = np.random.randint(0,len(data_list_2_train),(batch,)).tolist()
+    #     sub_set =list(map(data_list_2_train.__getitem__, Indx))
         
-        # with torch.no_grad(): 
-        params = (128,  100,120,  -170,170,  -10,10,-10,10)
-        loss_ACDC, res2, Imgs2, Masks2 = Network.Training.straightForward(sub_set, net, params, TrainMode=True)
+    #     # with torch.no_grad(): 
+    #     params = (128,  100,120,  -170,170,  -10,10,-10,10)
+    #     loss_ACDC, res2, Imgs2, Masks2 = Network.Training.straightForward(sub_set, net, params, TrainMode=True)
                                                        
-        # train_loss_ACDC.append(loss_ACDC.detach().cpu().numpy())
-        dice = Util.dice_coef( res2[:,0,:,:]>0.5, Masks2[:,0,:,:].cuda() )                
-        diceTr2.append(dice.detach().cpu().numpy())
+    #     # train_loss_ACDC.append(loss_ACDC.detach().cpu().numpy())
+    #     dice = Util.dice_coef( res2[:,0,:,:]>0.5, Masks2[:,0,:,:].cuda() )                
+    #     diceTr2.append(dice.detach().cpu().numpy())
     
     
-    ## Consistency regularizzation
-        Indx = np.random.randint(0,len(data_list_1_train),(batch,)).tolist()
-        sub_set = list(map(data_list_1_train.__getitem__, Indx))
-        loss_cons, Imgs_P, res, res_P = Network.Training.Consistency(sub_set, net, params, TrainMode=True)
-        diceTr3.append(1 - loss_cons.detach().cpu().numpy())
+    # ## Consistency regularizzation
+    #     Indx = np.random.randint(0,len(data_list_1_train),(batch,)).tolist()
+    #     sub_set = list(map(data_list_1_train.__getitem__, Indx))
+    #     loss_cons, Imgs_P, res, res_P = Network.Training.Consistency(sub_set, net, params, TrainMode=True)
+    #     diceTr3.append(1 - loss_cons.detach().cpu().numpy())
         
     ## backF - training
-        loss = loss_Joint + 0.0001*loss_ACDC + 0.01*loss_cons
+        # loss = loss_Joint + 0.0001*loss_ACDC + 0.01*loss_cons
+        loss = loss_Joint
         optimizer.zero_grad()
         loss.backward()
         # torch.nn.utils.clip_grad_value_(net.parameters(), clip_value=1.0)
@@ -175,3 +176,4 @@ for epch in range(0,80):
     # plt.plot(diceTr_cons)
     # plt.show()
 
+torch.save(net, 'Models/net_v3_1_1.pt')
