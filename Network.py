@@ -186,12 +186,12 @@ class Training():
         Imgs_P = Util.augmentation2(Imgs, augm_params)
         Imgs_P = torch.nan_to_num(Imgs_P, nan=0.0)
         
-        net.train(mode=True)
-    # with torch.no_grad(): 
-        res = net( Imgs.cuda() )
-        res = torch.softmax(res,dim=1)
-        res_P = net( Imgs_P.cuda() )
-        res_P = torch.softmax(res_P,dim=1)
+        net.train(mode=False)
+        with torch.no_grad(): 
+            res = net( Imgs.cuda() )
+            res = torch.softmax(res,dim=1)
+            res_P = net( Imgs_P.cuda() )
+            res_P = torch.softmax(res_P,dim=1)
          
         res = Util.augmentation2(res[:,[0],:,:], augm_params)
         # MSE = nn.MSELoss()
