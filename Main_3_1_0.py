@@ -18,14 +18,15 @@ import Utilities as Util
 import Network
 
 # 
-net = Network.Net(enc_chs=(1,16,32,64,128,256), dec_chs=(256,128,64,32,16), out_sz=(128,128), retain_dim=False, num_class=2)
-# net = torch.load(r"/data/rj21/MyoSeg/Models/net_v3_0_0.pt")
+# net = Network.Net(enc_chs=(1,16,32,64,128,256), dec_chs=(256,128,64,32,16), out_sz=(128,128), retain_dim=False, num_class=2)
+net = torch.load(r"/data/rj21/MyoSeg/Models/net_v3_0_0.pt")
+# net = torch.load(r"/data/rj21/MyoSeg/Models/net_v3_1_5.pt")
 # net = torch.load(r"/data/rj21/MyoSeg/Models/net_v2_1.pt")
 
 net = net.cuda()
-optimizer = optim.Adam(net.parameters(), lr=0.0003, weight_decay=0.0000001)
+optimizer = optim.Adam(net.parameters(), lr=0.0003, weight_decay=0.00001)
 # optimizer = optim.SGD(net2.parameters(), lr=0.000001, weight_decay=0.0001, momentum= 0.8)
-scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=20, gamma=0.1, verbose=True)
+scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=40, gamma=0.5, verbose=True)
 
 ## StT LABELLED
 path_data = '/data/rj21/Data/Data_StT_Labelled/Resaved_data_StT_cropped'  # Linux bioeng358
@@ -56,12 +57,12 @@ diceTe_Joint=[]
 diceTe_ACDC=[]
 
 
-for epch in range(0,50):
+for epch in range(0,150):
     random.shuffle(data_list_1_train)
     random.shuffle(data_list_2_train)
     random.shuffle(data_list_3_train)
     net.train(mode=True)
-    batch = 16
+    batch = 8
     diceTr1=[]
     diceTr2=[]
     diceTr3=[]
@@ -70,14 +71,14 @@ for epch in range(0,50):
         
     # for num_ite in range(0,len(data_list_1_train)-batch-1, batch):
     # for num_ite in range(0,len(data_list_1_train)/batch):
-    for num_ite in range(0,100):
+    for num_ite in range(0,160):
       
     ### Pro StT our dataset JOINT
         # sub_set = data_list_1_train[num:num+batch]
         Indx = np.random.randint(0,len(data_list_1_train),(batch,)).tolist()
         sub_set =list(map(data_list_1_train.__getitem__, Indx))
         
-        params = (128,  100,120,  -170,170,  -10,10,-10,10)
+        params = (128,  80,120,  -170,170,  -10,10,-10,10)
         loss_Joint, res1, Imgs1, Masks1 = Network.Training.straightForward(sub_set, net, params, TrainMode=True)
                                                    
         # train_loss_Joint.append(loss_Joint.detach().cpu().numpy())
@@ -108,7 +109,7 @@ for epch in range(0,50):
             # loss = loss_Joint + 0.0001*loss_ACDC + 0.01*loss_cons
             # loss = loss_Joint
             # loss = loss_Joint + 0.05*loss_ACDC
-            loss = loss_Joint + 0.05*loss_cons
+            loss = loss_Joint + 0.1*loss_cons
             optimizer.zero_grad()
             loss.backward()
             # torch.nn.utils.clip_grad_value_(net.parameters(), clip_value=1.0)
@@ -191,7 +192,7 @@ for epch in range(0,50):
     # plt.plot(diceTr_cons)
     # plt.show()
     
-version = "v3_1_7"
+version = "v3_1_9_6"
 
 torch.save(net, 'Models/net_' + version + '.pt')
 
