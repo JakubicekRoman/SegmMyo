@@ -28,13 +28,22 @@ optimizer = optim.Adam(net.parameters(), lr=0.0003, weight_decay=0.00001)
 # optimizer = optim.SGD(net2.parameters(), lr=0.000001, weight_decay=0.0001, momentum= 0.8)
 scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=40, gamma=0.5, verbose=True)
 
-## StT LABELLED
-path_data = '/data/rj21/Data/Data_StT_Labelled/Resaved_data_StT_cropped'  # Linux bioeng358
+## StT LABELLED - JOINT
+path_data = '/data/rj21/Data/Data_Joint_StT_Labelled/Resaved_data_StT_cropped'  # Linux bioeng358
 data_list = Util.CreateDataset_StT_dcm(os.path.normpath( path_data ))
 
 b = int(len(data_list)*0.7)
 data_list_1_train = data_list[1:b]
 data_list_1_test = data_list[b+1:-1]
+
+## StT LABELLED - JOINT
+path_data = '/data/rj21/Data/Data_StT_Labelled/Resaved_data_StT_cropped'  # Linux bioeng358
+data_list = Util.CreateDataset_StT_dcm(os.path.normpath( path_data ))
+
+# b = int(len(data_list)*0.7)
+# data_list_4_train = data_list[1:b]
+# data_list_4_test = data_list[b+1:-1]
+data_list_4_train = data_list
 
 ## ACDC
 path_data = '/data/rj21/Data/Data_ACDC/training'  # Linux bioeng358
