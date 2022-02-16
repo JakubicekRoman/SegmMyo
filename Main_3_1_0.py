@@ -18,13 +18,13 @@ import Utilities as Util
 import Network
 
 # 
-net = Network.Net(enc_chs=(1,16,32,64,128,256), dec_chs=(256,128,64,32,16), out_sz=(128,128), retain_dim=False, num_class=2)
+net = Network.Net(enc_chs=(1,64,128,256), dec_chs=(256,128,64), out_sz=(128,128), head=(64), retain_dim=False, num_class=2)
 # net = torch.load(r"/data/rj21/MyoSeg/Models/net_v3_0_0.pt")
 # net = torch.load(r"/data/rj21/MyoSeg/Models/net_v3_1_5.pt")
 # net = torch.load(r"/data/rj21/MyoSeg/Models/net_v2_1.pt")
 
 net = net.cuda()
-optimizer = optim.Adam(net.parameters(), lr=0.0003, weight_decay=0.000001)
+optimizer = optim.Adam(net.parameters(), lr=0.0003, weight_decay=0.00001)
 # optimizer = optim.SGD(net2.parameters(), lr=0.000001, weight_decay=0.0001, momentum= 0.8)
 scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=40, gamma=0.1, verbose=True)
 
@@ -66,7 +66,7 @@ diceTe_ACDC=[]
 diceTe_StT=[]
 diceTe_Clin=[]
 
-for epch in range(0,60):
+for epch in range(0,100):
     # random.shuffle(data_list_1_train)
     random.shuffle(data_list_2_train)
     random.shuffle(data_list_3_train)
@@ -83,7 +83,7 @@ for epch in range(0,60):
         
     # for num_ite in range(0,len(data_list_1_train)-batch-1, batch):
     # for num_ite in range(0,len(data_list_1_train)/batch):
-    for num_ite in range(0,100):
+    for num_ite in range(0,80):
       
     ### Pro StT our dataset JOINT
         # # sub_set = data_list_1_train[num:num+batch]
@@ -115,7 +115,7 @@ for epch in range(0,60):
         
         # with torch.no_grad(): 
         params = (128,  100,120,  -170,170,  -10,10,-10,10)
-        loss_ACDC, res2, Imgs2, Masks2 = Network.Training.straightForward(sub_set, net, params, TrainMode=True)
+        loss_ACDC, res2, Imgs2, Masks2 = Network.Training.straightForward(sub_set, net, params, TrainMode=True, contrast=True)
                                                        
         # train_loss_ACDC.append(loss_ACDC.detach().cpu().numpy())
         dice = Util.dice_coef( res2[:,0,:,:]>0.5, Masks2[:,0,:,:].cuda() )                
@@ -144,6 +144,19 @@ for epch in range(0,60):
     scheduler.step()
     
     net.train(mode=False)
+    
+    batch = 100
+    random.shuffle(data_list_2_test)
+    # for num in range(0,len(data_list_1_test)-batch-1, batch):   
+    for num in range(0,1): 
+        sub_set2 = data_list_2_test[num:num+batch]   
+        with torch.no_grad(): 
+            _, resTE, ImgsTe, MasksTE = Network.Training.straightForward(sub_set2, net, params, TrainMode=False, contrast=False)       
+                         
+        dice = Util.dice_coef( resTE[:,0,:,:]>0.5, MasksTE[:,0,:,:].cuda() )                
+        diceTe2.append(dice.detach().cpu().numpy())
+        
+        
     # batch = len(data_list_4_test)
     batch = 100
     random.shuffle(data_list_4_test)
@@ -152,22 +165,12 @@ for epch in range(0,60):
         sub_set1 = data_list_4_test[num:num+batch]
         params = (128,  80,120,  -180,180,  -10,0,-10,0)
         with torch.no_grad():
-            _, resTE, ImgsTe, MasksTE = Network.Training.straightForward(sub_set1, net, params, TrainMode=False)       
+            _, resTE, ImgsTe, MasksTE = Network.Training.straightForward(sub_set1, net, params, TrainMode=False, contrast=False)       
                          
         dice = Util.dice_coef( resTE[:,0,:,:]>0.5, MasksTE[:,0,:,:].cuda() )                
         # diceTe1.append(dice.detach().cpu().numpy())
         diceTe4.append(dice.detach().cpu().numpy())
-    
-    batch = 100
-    random.shuffle(data_list_2_test)
-    # for num in range(0,len(data_list_1_test)-batch-1, batch):   
-    for num in range(0,1): 
-        sub_set2 = data_list_2_test[num:num+batch]   
-        with torch.no_grad(): 
-            _, resTE, ImgsTe, MasksTE = Network.Training.straightForward(sub_set2, net, params, TrainMode=False)       
-                         
-        dice = Util.dice_coef( resTE[:,0,:,:]>0.5, MasksTE[:,0,:,:].cuda() )                
-        diceTe2.append(dice.detach().cpu().numpy())
+
         
     torch.cuda.empty_cache()
         
@@ -231,7 +234,7 @@ for epch in range(0,60):
     # plt.plot(diceTr_cons)
     # plt.show()
     
-version = "v7_0_1"
+version = "v7_0_2"
 torch.save(net, 'Models/net_' + version + '.pt')
 
 file_name = "Models/Res_net_" + version + ".pkl"

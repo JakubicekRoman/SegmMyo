@@ -16,11 +16,16 @@ import pydicom as dcm
 
 path_save = '/data/rj21/MyoSeg/Export/contrast_augment'
 
-img_path = '/data/rj21/Data/Data_StT_Unlabeled/A025_/T1-preGd-contrasts_series0026-Body/img0006-49.1244.dcm'
+# img_path = '/data/rj21/Data/Data_StT_Unlabeled/A025_/T1-preGd-contrasts_series0026-Body/img0006-49.1244.dcm'
+img_path = '/data/rj21/Data/Data_ACDC/training/patient015/patient015_frame01.nii.gz'
 
-dataset = dcm.dcmread(img_path)
-img = dataset.pixel_array.astype(dtype='float32')
-img = img[50:125,40:120]
+# dataset = dcm.dcmread(img_path)
+# img = dataset.pixel_array.astype(dtype='float32')
+img = Util.read_nii( img_path, (0,0,0,0) )
+
+# img = img[50:125,40:120]
+img = img[25:135,60:180]
+
 
 plt.Figure()
 plt.imshow(img)

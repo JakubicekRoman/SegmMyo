@@ -73,35 +73,38 @@ class BottleNeck(nn.Module):
     def __init__(self, chs=(1024,1024) ):
         super().__init__()
         self.conv1x1_1 =  nn.Conv2d(chs[0], chs[1], 1, padding=0, padding_mode='replicate')     
-        self.conv1x1_2 =  nn.Conv2d(chs[0], chs[1], 1, padding=0, padding_mode='replicate')     
-        self.DP =  nn.Dropout(p=0.2)
+        # self.conv1x1_2 =  nn.Conv2d(chs[0], chs[1], 1, padding=0, padding_mode='replicate')     
+        # self.DP =  nn.Dropout(p=0.5)
     def forward(self, x):
         
-        return self.conv1x1_2(self.DP(self.conv1x1_1(x)))
-   
+        # return self.conv1x1_2(self.DP(self.conv1x1_1(x)))
+        return self.conv1x1_1(x)
+
 
 
 class Net(nn.Module):
-    def __init__(self, enc_chs=(3,64,128,256,512,1024), dec_chs=(1024, 512, 256, 128, 64), num_class=1, retain_dim=False, out_sz=(572,572)):
+    def __init__(self, enc_chs=(3,64,128,256,512,1024), dec_chs=(1024, 512, 256, 128, 64), num_class=1, retain_dim=False, out_sz=(572,572), head=(64)):
         super().__init__()
         self.encoder     = Encoder(enc_chs)
         self.bottleneck  = BottleNeck((enc_chs[-1],enc_chs[-1]))
         self.decoder     = Decoder(dec_chs)
-        self.head        = nn.Conv2d(dec_chs[-1], num_class, 1)
+        self.head1        = nn.Conv2d(dec_chs[-1], head, 1)
+        self.head2        = nn.Conv2d(head, num_class, 1)
         self.retain_dim  = retain_dim
         self.out_sz      = out_sz
+        self.DP_H =  nn.Dropout(p=0.5)
 
     def forward(self, x):
         enc_ftrs = self.encoder(x)
         OutBN = self.bottleneck(enc_ftrs[::-1][0])
         out      = self.decoder(OutBN, enc_ftrs[::-1][1:])
-        out      = self.head(out)
+        out      = self.head2( self.DP_H( self.head1(out) ))
         if self.retain_dim:
             out = F.interpolate(out, self.out_sz)
         return out
     
 class Training(): 
-    def straightForward(data_list, net, params, TrainMode=True): 
+    def straightForward(data_list, net, params, TrainMode=True, contrast=False): 
 
         net.train(mode=TrainMode)
         batch = len(data_list)
@@ -136,7 +139,7 @@ class Training():
                 
             img = np.expand_dims(img, 0).astype(np.float32)
             mask = np.expand_dims(mask, 0).astype(np.float32)     
-            if TrainMode:
+            if contrast:
                 phi = random.uniform(0,2*np.pi)
                 img = Util.random_contrast(img, [0.2, 3, phi])     
 
@@ -190,13 +193,14 @@ class Training():
                             'Flip': np.random.random()>0.5
                             })
                    
-        Imgs_P = Util.augmentation2(Imgs, augm_params)
-        Imgs_P = torch.nan_to_num(Imgs_P, nan=0.0)
+        # Imgs_P = Util.augmentation2(Imgs, augm_params)
+        # Imgs_P = torch.nan_to_num(Imgs_P, nan=0.0)
+        Imgs_P = Imgs
         
         phi = random.uniform(0,2*np.pi)
         Imgs_P = Util.random_contrast_Torch(Imgs_P, [0.2, 3, phi])
         
-        net.train(mode=True)
+        net.train(mode=TrainMode)
     # with torch.no_grad(): 
         res = net( Imgs.cuda() )
         res = torch.softmax(res,dim=1)
