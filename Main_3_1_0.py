@@ -134,7 +134,7 @@ for epch in range(0,100):
             # loss = loss_Clin
             # loss = loss_Joint
             # loss = loss_Joint + 0.01*loss_cons
-            loss = loss_ACDC + 0.01*loss_cons
+            loss = loss_ACDC + 0.2*loss_cons
             optimizer.zero_grad()
             loss.backward()
             # torch.nn.utils.clip_grad_value_(net.parameters(), clip_value=1.0)
