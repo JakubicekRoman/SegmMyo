@@ -27,9 +27,10 @@ import Network
 # data_list_test = data_list
 
 ## StT LABELLED - P1-10
-path_data = '/data/rj21/Data/Data_StT_p10_lab'  # Linux bioeng358
+path_data = '/data/rj21/Data/Data_StT_Labaled'  # Linux bioeng358
 data_list = Util.CreateDataset_StT_P_dcm(os.path.normpath( path_data ))
-data_list_test = data_list
+# data_list_test = data_list
+data_list_test = data_list[0:737]
 
 
 # b = int(len(data_list)*0.7)
@@ -45,8 +46,8 @@ data_list_test = data_list
 # open_file.close()
 
 # version = "v3_1_9_5"
-version = "v3_3_4"
-# vesion = "v3_0_0_0"
+# version = "v3_3_4"
+version = "v4_0_3"
 # net = torch.load(r"/data/rj21/MyoSeg/Models/net_v3_0_0.pt")
 # net = torch.load(r"/data/rj21/MyoSeg/Models/net_v1_5.pt")
 net = torch.load(r"/data/rj21/MyoSeg/Models/net_" + version + ".pt")

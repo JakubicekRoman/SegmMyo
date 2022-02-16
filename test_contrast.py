@@ -42,8 +42,9 @@ for _,i in enumerate(phis):
     
     t = np.arange(0,1,0.01)
     plt.Figure()
-    plt.plot( t+ params[0]*np.cos( params[1]*2*np.pi*t + params[2]))
+    plt.plot(t, t+ params[0]*np.cos( params[1]*2*np.pi*t + params[2]))
     Fig = plt.gcf()
+    plt.ylim([-0.2, 1.2])
     plt.show()
     plt.draw()
     Fig.savefig( path_save + '/' + 'trans_' +  str(i)  + '.png', dpi=150)
