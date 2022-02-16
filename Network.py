@@ -136,11 +136,14 @@ class Training():
                 
             img = np.expand_dims(img, 0).astype(np.float32)
             mask = np.expand_dims(mask, 0).astype(np.float32)     
-            
+            if TrainMode:
+                phi = random.uniform(0,2*np.pi)
+                img = Util.random_contrast(img, [0.2, 3, phi])     
+
             img = Util.augmentation2(torch.tensor(img), augm_params)
             mask = Util.augmentation2(torch.tensor(mask), augm_params)
-            mask = mask>0.5                      
-    
+            mask = mask>0.5    
+        
             Imgs[b,0,:,:] = img
             Masks[b,0,:,:] = mask
         
@@ -172,6 +175,10 @@ class Training():
                 
             img = Util.resize_with_padding(img,(128,128))      
             img =  np.expand_dims(img, 0).astype(dtype='float32')
+            
+            # phi = random.uniform(0,2*np.pi)
+            # img = Util.random_contrast(img, [0.2, 3, phi])
+            
             Imgs[b,0,:,:] = torch.tensor(img)
          
         augm_params=[]
@@ -186,13 +193,16 @@ class Training():
         Imgs_P = Util.augmentation2(Imgs, augm_params)
         Imgs_P = torch.nan_to_num(Imgs_P, nan=0.0)
         
-        net.train(mode=False)
-    # with _torch.no_grad(): 
+        phi = random.uniform(0,2*np.pi)
+        Imgs_P = Util.random_contrast_Torch(Imgs_P, [0.2, 3, phi])
+        
+        net.train(mode=True)
+    # with torch.no_grad(): 
         res = net( Imgs.cuda() )
         res = torch.softmax(res,dim=1)
         res_P = net( Imgs_P.cuda() )
         res_P = torch.softmax(res_P,dim=1)
-     
+ 
         res = Util.augmentation2(res[:,[0],:,:], augm_params)
         # MSE = nn.MSELoss()
         # loss = MSE(res, res_P[:,[0],:,:])

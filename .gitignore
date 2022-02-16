@@ -5,6 +5,8 @@ Data_ACDC/
 Models/
 valid/
 Export/exported_images/
+Export/contrast_augment/
 Final/Results/
 Final/*.pt
+*.zip
 __pycache__/

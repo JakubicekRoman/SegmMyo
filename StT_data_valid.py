@@ -21,14 +21,20 @@ import Utilities as Util
 import Network
 
 
-## StT LABELLED - JOINT
-path_data = '/data/rj21/Data/Data_Joint_StT_Labelled/Resaved_data_StT_cropped'  # Linux bioeng358
-data_list = Util.CreateDataset_StT_dcm(os.path.normpath( path_data ))
+# ## StT LABELLED - JOINT
+# path_data = '/data/rj21/Data/Data_Joint_StT_Labelled/Resaved_data_StT_cropped'  # Linux bioeng358
+# data_list = Util.CreateDataset_StT_J_dcm(os.path.normpath( path_data ))
+# data_list_test = data_list
+
+## StT LABELLED - P1-10
+path_data = '/data/rj21/Data/Data_StT_p10_lab'  # Linux bioeng358
+data_list = Util.CreateDataset_StT_P_dcm(os.path.normpath( path_data ))
+data_list_test = data_list
 
 
-b = int(len(data_list)*0.7)
-data_list_train = data_list[1:b]
-data_list_test = data_list[b+1:-1]
+# b = int(len(data_list)*0.7)
+# data_list_train = data_list[1:b]
+# data_list_test = data_list[b+1:-1]
 
 # file_name = "data_list_Data2_all_dcm.pkl"
 # open_file = open(file_name, "wb")
@@ -38,13 +44,18 @@ data_list_test = data_list[b+1:-1]
 # data_list_test = pickle.load(open_file)
 # open_file.close()
 
-version = "v3_1_9_5"
+# version = "v3_1_9_5"
+version = "v3_3_4"
+# vesion = "v3_0_0_0"
 # net = torch.load(r"/data/rj21/MyoSeg/Models/net_v3_0_0.pt")
 # net = torch.load(r"/data/rj21/MyoSeg/Models/net_v1_5.pt")
 net = torch.load(r"/data/rj21/MyoSeg/Models/net_" + version + ".pt")
 net = net.cuda()
 
 path_save = '/data/rj21/MyoSeg/valid/Main_3_StT'
+save_name = 'P_valid'
+
+
 # path_save = '/data/rj21/MyoSeg/valid'
 try:
     os.mkdir(path_save)
@@ -178,4 +189,4 @@ for num in range(0,len(data_list_test),1):
     # Fig.savefig( path_save + '/' + 'res_' + ID_image  + '_orig.png', dpi=150)
     # plt.close(Fig)
     
-Util.save_to_excel(res_table, path_save + '/' , 'Results_' + version + '_all')
+Util.save_to_excel(res_table, path_save + '/' , 'Res_' + save_name + '_' + version)

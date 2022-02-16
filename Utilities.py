@@ -9,6 +9,7 @@ import torchvision.transforms as T
 import cv2
 import SimpleITK as sitk
 
+import matplotlib.pyplot as plt
 
 # import Loaders
 
@@ -108,6 +109,21 @@ def augmentation(img, new_width=None, new_height=None, rand_tr='Rand'):
     return center_cropped_img, rand_transl
 
 
+def random_contrast(x,params):
+    y = (x - x.min()) / (x.max() - x.min())       
+    y = y + params[0]*np.cos( params[1]*2*np.pi*y + params[2])
+    # t = np.arange(0,1,0.01)
+    # plt.plot( t+ params[0]*np.cos( params[1]*2*np.pi*t + params[2]))
+    # plt.show()
+    return y
+
+def random_contrast_Torch(x,params):
+    y = (x - torch.min(x)) / (torch.max(x) - torch.min(x))       
+    y = y + params[0]*torch.cos( params[1]*2*np.pi*y + params[2])
+    # t = np.arange(0,1,0.01)
+    # plt.plot( t+ params[0]*np.cos( params[1]*2*np.pi*t + params[2]))
+    # plt.show()
+    return y
 
 def crop_min(img):
     
@@ -281,7 +297,7 @@ def CreateDatasetOur(path_data ):
 
 
 
-def CreateDataset_StT_dcm(path_data):
+def CreateDataset_StT_J_dcm(path_data):
     data_list_tr = []
     iii=0
     p = os.listdir(path_data)
@@ -319,30 +335,71 @@ def CreateDataset_StT_dcm(path_data):
             
     return data_list_tr
 
-def CreateDataset_StT_UnL_dcm(path_data):
+def CreateDataset_StT_P_dcm(path_data):
     data_list_tr = []
+    iii=0
     p = os.listdir(path_data)
     for ii in range(0,len(p)):
         pat_name = p[ii]
-        pthX = os.path.join(path_data, pat_name)
-        if os.path.isdir(pthX):
-            f = os.listdir(pthX)
-            for _,sf in enumerate(f):
-                pth = os.path.join(path_data, pat_name, sf)
-                if os.path.isdir(pth):
-                        ff = os.listdir(pth)  
-                        for sl,file in enumerate(ff):
-                            if file.find('.dcm')>=0:
-                                pth2 = os.path.join(path_data, pat_name, sf, file)
-                                data_list_tr.append( {'img_path': pth2,
-                                                      'mask_path': pth2,
-                                                      'pat_name': pat_name,
-                                                      'file_name': sf,
-                                                      'slice': sl
-                                                      # 'ID_pat': ii,
-                                                      # 'ID_scan': iii
-                                                      } )
-                                # iii+=1
+        f = os.listdir(os.path.join(path_data, pat_name))
+        for _,file in enumerate(f):
+            if file.find('_gt')>0:
+                # if file.find('Joint')>=0 and file.find('_W')<0:
+                # if file.find('Joint')>=0:
+                    path_mask = os.path.join(path_data, pat_name, file)
+                    name = file[0:file.find('_gt')] + file[file.find('_gt')+3:]
+                    # path_maps = os.path.join(path_data, pat_name, name+'.nii.gz')
+                    path_maps = os.path.join(path_data, pat_name, name)
+                    seq = file.split('_')
+                # if file.find('_W4')>=0:   
+                    # sizeData = Loaders.size( path_maps )
+                    sizeData = size_nii( path_maps )
+
+                    if len(sizeData)==2:
+                        sizeData = sizeData + (1,)
+                    # print(sizeData)
+                    
+                    for sl in range(0,sizeData[2]):
+                        data_list_tr.append( {'img_path': path_maps,
+                                              'mask_path': path_mask,
+                                              'pat_name': pat_name,
+                                              'file_name': name,
+                                              'slice': seq[2],
+                                              'Seq': seq[1],
+                                              'ID_pat': ii,
+                                              'ID_scan': iii
+                                              } )
+                    iii+=1
+            
+    return data_list_tr
+
+
+def CreateDataset_StT_UnL_dcm(path_data):
+    data_list_tr = []
+    p = os.listdir(path_data)
+    p = sorted(p)
+    for ii in range(0,len(p)):
+        pat_name = p[ii]
+        if not( pat_name.find('P')>=0 and int(pat_name[1:-1])<=30 ):
+            pthX = os.path.join(path_data, pat_name)
+            if os.path.isdir(pthX):
+                f = os.listdir(pthX)
+                for _,sf in enumerate(f):
+                    pth = os.path.join(path_data, pat_name, sf)
+                    if os.path.isdir(pth):
+                            ff = os.listdir(pth)  
+                            for sl,file in enumerate(ff):
+                                if file.find('.dcm')>=0:
+                                    pth2 = os.path.join(path_data, pat_name, sf, file)
+                                    data_list_tr.append( {'img_path': pth2,
+                                                          'mask_path': pth2,
+                                                          'pat_name': pat_name,
+                                                          'file_name': sf,
+                                                          'slice': sl
+                                                          # 'ID_pat': ii,
+                                                          # 'ID_scan': iii
+                                                          } )
+                                    # iii+=1
             
     return data_list_tr
 
