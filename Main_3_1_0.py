@@ -18,14 +18,15 @@ import Utilities as Util
 # import Loaders
 import Network
 
+
 # 
-# net = Network.Net(enc_chs=(1,32,64,128,256), dec_chs=(256,128,64,32), out_sz=(128,128), head=(128), retain_dim=False, num_class=2)
-net = torch.load(r"/data/rj21/MyoSeg/Models/net_v3_0_0.pt")
+net = Network.Net(enc_chs=(1,32,64,128,256), dec_chs=(256,128,64,32), out_sz=(128,128), head=(128), retain_dim=False, num_class=2)
+# net = torch.load(r"/data/rj21/MyoSeg/Models/net_v3_0_0.pt")
 # net = torch.load(r"/data/rj21/MyoSeg/Models/net_v7_0_0.pt")
 # net = torch.load(r"/data/rj21/MyoSeg/Models/net_v5_0_6.pt")
 
 net = net.cuda()
-optimizer = optim.Adam(net.parameters(), lr=0.001, weight_decay=0.00000)
+optimizer = optim.Adam(net.parameters(), lr=0.0024, weight_decay=0.00000)
 # optimizer = optim.SGD(net2.parameters(), lr=0.000001, weight_decay=0.0001, momentum= 0.8)
 scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=50, gamma=0.1, verbose=True)
 
@@ -421,7 +422,7 @@ for epch in range(0,122):
     # plt.plot(diceTr_cons)
     # plt.show()
     
-version = "v7_3_1"
+version = "v7_4_0"
 torch.save(net, 'Models/net_' + version + '.pt')
 
 file_name = "Models/Res_net_" + version + ".pkl"

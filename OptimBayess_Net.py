@@ -9,153 +9,204 @@ import pickle
 from bayes_opt import BayesianOptimization
 
 import Utilities as Util
-import Loaders
-import Unet_2D
-
+import Network
 
 
 def get_value(**params):
     
     lr         = params['lr']
     batch      = params['batch']
-    L2         = params['L2']
     step_size  = params['step_size']
-    epchs      = params['epchs']
+    sigma      = params['sigma']
+    lamda_cons = params['lambda_cons']
     
     batch = int(np.round(batch))
     step_size = int(np.round(step_size))
-    epchs = int(np.round(epchs))
     
-
-    net = Unet_2D.UNet(enc_chs=(1,64,128,256,512), dec_chs=(512,256,128,64), out_sz=(128,128), retain_dim=False, num_class=2)
-    # net = torch.load(r"D:\jakubicek\SegmMyo\Models\net_v1_0.pt")
+    
+    net = Network.Net(enc_chs=(1,32,64,128,256), dec_chs=(256,128,64,32), out_sz=(128,128), head=(128), retain_dim=False, num_class=2)
+    
     
     net = net.cuda()
-    optimizer = optim.Adam(net.parameters(), lr=lr , weight_decay=L2)
-    # optimizer = optim.SGD(net2.parameters(), lr=0.000001, weight_decay=0.0001, momentum= 0.8)
+    optimizer = optim.Adam(net.parameters(), lr=lr, weight_decay=0.000001)
     scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=step_size, gamma=0.1, verbose=False)
-
-    path_data = '/data/rj21/Data/Data_ACDC/training'  # Linux bioeng358
-    # path_data = 'D:\jakubicek\SegmMyo\Data_ACDC\\training'  # Win CUDA2
-    data_list_train, data_list_test = Util.CreateDataset(os.path.normpath( path_data ))
     
-    # train_loss=[]
-    diceTe=[]
-
-    for epch in range(0,epchs):
-        random.shuffle(data_list_train)
+    
+    # ## StT LABELLED - JOINT
+    path_data = '/data/rj21/Data/Data_Joint_StT_Labelled/Resaved_data_StT_cropped'  # Linux bioeng358
+    data_list = Util.CreateDataset_StT_J_dcm(os.path.normpath( path_data ))
+    b = int(len(data_list)*0.8)
+    data_list_1_train = data_list[1:b]
+    
+    
+    ## StT LABELLED - P1-30
+    path_data = '/data/rj21/Data/Data_StT_Labaled'  # Linux bioeng358
+    data_list = Util.CreateDataset_StT_P_dcm(os.path.normpath( path_data ))
+    b = int(len(data_list)*0.60)
+    data_list_4_train = data_list[1:b]
+    data_list_4_test = data_list[b+1:-1]
+    
+    
+    ## Dataset - MyoPS
+    path_data = '/data/rj21/Data/Data_MyoPS'  # Linux bioeng358
+    data_list = Util.CreateDataset_MyoPS_dcm(os.path.normpath( path_data ))
+    data_list_5_train = data_list
+    
+    ## Dataset - EMIDEC
+    path_data = '/data/rj21/Data/Data_emidec'  # Linux bioeng358
+    data_list = Util.CreateDataset_MyoPS_dcm(os.path.normpath( path_data ))
+    data_list_6_train = data_list
+    
+    # StT UNLABELLED
+    path_data = '/data/rj21/Data/Data_StT_Unlabeled'  # Linux bioeng358
+    data_list = Util.CreateDataset_StT_UnL_dcm(os.path.normpath( path_data ))
+    data_list_3_train = data_list
+    random.shuffle(data_list_3_train)
+    
+    diceTe_Clin=[]
+    
+    # num_iter = 60
+    batchTr = batch
+    D1 = np.zeros((len(data_list_1_train),2))
+    D1[:,0] = np.arange(0,len(data_list_1_train))
+    D4 = np.zeros((len(data_list_4_train),2))
+    D4[:,0] = np.arange(0,len(data_list_4_train))
+    D5 = np.zeros((len(data_list_5_train),2))
+    D5[:,0] = np.arange(0,len(data_list_5_train))
+    D6 = np.zeros((len(data_list_6_train),2))
+    D6[:,0] = np.arange(0,len(data_list_6_train))
+    
+    
+    mu1, sigma1 = len(data_list_1_train)/10 ,  sigma*len(data_list_1_train)
+    mu4, sigma4 = len(data_list_4_train)/10 ,  sigma*len(data_list_4_train)
+    mu5, sigma5 = len(data_list_5_train)/10 ,  sigma*len(data_list_5_train)
+    mu6, sigma6 = len(data_list_6_train)/10 ,  sigma*len(data_list_6_train)
+    
+    for epch in range(0,80):
         net.train(mode=True)
-        # batch = 32
-        diceTe=[]
+        diceTr1=[]
+        diceTr2=[]
+        diceTr3=[]
+        diceTr4=[]
+        diceTr5=[]
+        diceTr6=[]
+        diceTe1=[]
+        diceTe2=[]
+        diceTe4=[]
+        diceTe5=[]
+        diceTe6=[]
+        Inds1=[]
+        Inds2=[]
+        Inds4=[]
+        Inds5=[]
+        Inds6=[]
             
-        for num in range(0,len(data_list_train)-batch-1, batch):
-    
+        for num_ite in range(0,100):
+          
+        ## Pro StT our dataset JOINT
+            Indx = Util.rand_norm_distrb(batchTr, mu1, sigma1, [0,len(data_list_1_train)]).astype('int')
+            Indx = D1[Indx,0].astype('int')
+            sub_set = list(map(data_list_1_train.__getitem__, Indx))
             
-            t=0
-            Imgs = torch.tensor(np.zeros((batch,1,128,128) ), dtype=torch.float32)
-            Masks = torch.tensor(np.zeros((batch,2,128,128) ), dtype=torch.float32)
-            
-            for b in range(0,batch):
-                current_index = data_list_train[num+b]['slice']
-                img_path = data_list_train[num+b]['img_path']
-                mask_path = data_list_train[num+b]['mask_path']
-            
-            
-                img = Loaders.read_nii( img_path, (0,0,current_index,t) )
-                mask = Loaders.read_nii( mask_path, (0,0,current_index,t) )
-                mask = mask==2
-            
-                img, transl = Util.augmentation(img, new_width=128, new_height=128, rand_tr='Rand')
-                mask, _  = Util.augmentation(mask, new_width=128, new_height=128, rand_tr = transl)
-        
-                rot = random.randint(1,4)
-                img = np.rot90(img,rot,(0,1))
-                mask = np.rot90(mask,rot,(0,1))
-                
-                if np.random.random()>0.5:
-                    img = np.fliplr(img)
-                    mask = np.fliplr(mask)
-                
-                # img = (img - np.mean(img))/ np.std(img)
-                
-                img = np.expand_dims(img, 0).astype(np.float32)
-                mask = np.expand_dims(mask, 0).astype(np.float32)
-        
-                Imgs[b,0,:,:] = torch.tensor(img)
-                Masks[b,0,:,:] = torch.tensor(mask)
-            
-            # rotater = T.RandomRotation(degrees=(-60, 60))
-            # rotated_imgs = rotater(Imgs)
-            
-            res = net( Imgs.cuda() )
-            res = torch.softmax(res,dim=1)
-            
-            
-            Masks[:,1,:,:] = (1-Masks[:,0,:,:])
-            # Masks[:,0,:,:] = Masks[:,0,:,:]*2
-            
-            # loss = Util.dice_loss(res, Masks.cuda() )
-            # loss = torch.nn.CrossEntropyLoss()(res[:,1,:,:],  Masks.type(torch.long).cuda() )
-            # loss = -torch.mean( torch.log( torch.cat( (res[Masks==1], res[Masks==2]/20 ), 0 ) )  )
-            # loss1 = -torch.mean( torch.log( res[Masks==1] ))
-            loss = Util.dice_loss( res[:,0,:,:], Masks[:,0,:,:].cuda() )
-            # loss = loss1 + loss2
+            params = (128,  80,120,  -170,170,  -10,10,-10,10)
+            loss_Joint, res1, Imgs1, Masks1 = Network.Training.straightForward(sub_set, net, params, TrainMode=True, Contrast=False)
                                                        
-            # train_loss.append(loss.detach().cpu().numpy())
-        
-            optimizer.zero_grad()
-            loss.backward()
-            # torch.nn.utils.clip_grad_value_(net.parameters(), clip_value=1.0)
-            optimizer.step()
-                    
-            # dice = Util.dice_coef( res[:,0,:,:]>0.5, Masks[:,0,:,:].cuda() )                
-            # diceTr.append(dice.detach().cpu().numpy())
+            dice = Util.dice_coef( res1[:,0,:,:]>0.5, Masks1[:,0,:,:].cuda() )                
+            diceTr1.append(dice.detach().cpu().numpy())
+            Inds1.append(Indx)
             
-            torch.cuda.empty_cache()
+        ### Pro StT our dataset CLINICAL
+            Indx = Util.rand_norm_distrb(batchTr, mu4, sigma4, [0,len(data_list_4_train)]).astype('int')
+            Indx = D4[Indx,0].astype('int')
+            sub_set =list(map(data_list_4_train.__getitem__, Indx))
+            
+            loss_Clin, res1, Imgs1, Masks1 = Network.Training.straightForward(sub_set, net, params, TrainMode=True, Contrast=False)
+                                                       
+            dice = Util.dice_coef( res1[:,0,:,:]>0.5, Masks1[:,0,:,:].cuda() )                
+            diceTr4.append(dice.detach().cpu().numpy())
+            Inds4.append(Indx)
+            
+        ### Pro MyoPS datatse
+            Indx = Util.rand_norm_distrb(batchTr, mu5, sigma5, [0,len(data_list_5_train)]).astype('int')
+            Indx = D5[Indx,0].astype('int')
+            sub_set =list(map(data_list_5_train.__getitem__, Indx))
+            
+            loss_MyoPS, res1, Imgs1, Masks1 = Network.Training.straightForward(sub_set, net, params, TrainMode=True, Contrast=False)
+                                                       
+            dice = Util.dice_coef( res1[:,0,:,:]>0.5, Masks1[:,0,:,:].cuda() )                
+            diceTr5.append(dice.detach().cpu().numpy())
+            Inds5.append(Indx)    
+            
+        ## Pro Emidec datatse
+            Indx = Util.rand_norm_distrb(batchTr, mu6, sigma6, [0,len(data_list_6_train)]).astype('int')
+            Indx = D6[Indx,0].astype('int')
+            sub_set =list(map(data_list_6_train.__getitem__, Indx))
+            
+            loss_Emidec, res1, Imgs1, Masks1 = Network.Training.straightForward(sub_set, net, params, TrainMode=True, Contrast=False)
+                                                       
+            dice = Util.dice_coef( res1[:,0,:,:]>0.5, Masks1[:,0,:,:].cuda() )                
+            diceTr6.append(dice.detach().cpu().numpy())
+            Inds6.append(Indx) 
+        
+        ## Consistency regularization
+            Indx = np.random.randint(0,len(data_list_3_train),(batchTr,)).tolist()
+            sub_set = list(map(data_list_3_train.__getitem__, Indx))
+            loss_cons, Imgs_P, res, res_P = Network.Training.Consistency(sub_set, net, params, TrainMode=True, Contrast=False)
+            diceTr3.append(1 - loss_cons.detach().cpu().numpy())
+            
+        ## backF - training
+            net.train(mode=True)
+            if epch>0:
+                
+                loss = 0.3*loss_Joint + loss_Clin + 0.3*loss_MyoPS + 0.1*loss_Emidec  + lamda_cons*loss_cons
+                optimizer.zero_grad()
+                loss.backward()
+                optimizer.step()
     
     
-        scheduler.step()
+        if epch>0:
+            scheduler.step()
+            
+        net.train(mode=False)
         
-    batch_te = 128
-    net.train(mode=False)
-    # random.shuffle(data_list_test)
-    for num in range(0,len(data_list_test)-batch_te-1, batch_te):
-       
-        t=0
-        Imgs = torch.tensor(np.zeros((batch_te,1,128,128) ), dtype=torch.float32)
-        Masks = torch.tensor(np.zeros((batch_te,2,128,128) ), dtype=torch.float32)
-
+        ### StT lab
+        params = (128,  80,120,  -0,0,  0,0,0,0)
+        batch = 128
+        random.shuffle(data_list_4_test)
+        for num in range(0,4):   
+            sub_set = data_list_4_test[num:num+batch]
+            with torch.no_grad():
+                _, resTE, ImgsTe, MasksTE = Network.Training.straightForward(sub_set, net, params, TrainMode=False, Contrast=False)       
+                             
+            dice = Util.dice_coef( resTE[:,0,:,:]>0.5, MasksTE[:,0,:,:].cuda() )                
+            diceTe4.append(dice.detach().cpu().numpy())
+             
+            # for b in range(0,batch):
+            #     A = resTE[b,0,:,:].detach().cpu().numpy()>0.5
+            #     B = MasksTE[b,0,:,:].detach().cpu().numpy()>0.5
+            #     HD4.append (np.max((Util.MASD_compute(A,B),Util.MASD_compute(B,A))))
         
-        for b in range(0,batch_te):
-            current_index = data_list_test[num+b]['slice']
-            img_path = data_list_test[num+b]['img_path']
-            mask_path = data_list_test[num+b]['mask_path']
-        
-            img = Loaders.read_nii( img_path, (0,0,current_index,t) )
-            mask = Loaders.read_nii( mask_path, (0,0,current_index,t) )
-            mask = mask==2
-        
-            img, transl = Util.augmentation(img, new_width=128, new_height=128, rand_tr='Rand')
-            mask, _  = Util.augmentation(mask, new_width=128, new_height=128, rand_tr = transl)
-    
-            img = np.expand_dims(img, 0).astype(np.float32)
-            mask = np.expand_dims(mask, 0).astype(np.float32)
-    
-            Imgs[b,0,:,:] = torch.tensor(img)
-            Masks[b,0,:,:] = torch.tensor(mask)
-        
-        
-        with torch.no_grad(): 
-            res = net( Imgs.cuda() )
-            res = torch.softmax(res,dim=1)
-                         
-        dice = Util.dice_coef( res[:,0,:,:]>0.5, Masks[:,0,:,:].cuda() )                
-        diceTe.append(dice.detach().cpu().numpy())
         
         torch.cuda.empty_cache()
+
         
+        D1 = D1[D1[:, 0].argsort()]
+        D1[np.concatenate(np.array(Inds1)),1] = np.concatenate(np.tile(np.array(diceTr1),(batchTr,1)).T)
+        D1 = D1[D1[:, 1].argsort()]
+        D4 = D4[D4[:, 0].argsort()]
+        D4[np.concatenate(np.array(Inds4)),1] = np.concatenate(np.tile(np.array(diceTr4),(batchTr,1)).T)
+        D4 = D4[D4[:, 1].argsort()]
+        D5 = D5[D5[:, 0].argsort()]
+        D5[np.concatenate(np.array(Inds5)),1] = np.concatenate(np.tile(np.array(diceTr5),(batchTr,1)).T)
+        D5 = D5[D5[:, 1].argsort()]
+        D6 = D6[D6[:, 0].argsort()]
+        D6[np.concatenate(np.array(Inds6)),1] = np.concatenate(np.tile(np.array(diceTr6),(batchTr,1)).T)
+        D6 = D6[D6[:, 1].argsort()]
         
-    return np.mean(diceTe)
+            
+     
+    
+    return np.mean(diceTe4)
         
 
 
@@ -170,15 +221,15 @@ def get_value(**params):
 
     
 pbounds = {'lr':[0.000001,0.01],
-           'batch':[8,64],
-           'L2':[0.0,0.00001],
-           'step_size':[10,20],
-           'epchs':[30,50]
+           'batch':[8,24],
+           'sigma':[0.5,2.0],
+           'step_size':[10,40],
+           'lambda_cons':[0.0,0.1]
            }  
 
 optimizer = BayesianOptimization(f = get_value, pbounds=pbounds,random_state=1)  
 
-optimizer.maximize(init_points=10,n_iter=100)
+optimizer.maximize(init_points=2,n_iter=20)
 
 print(optimizer.max)
 
@@ -187,7 +238,7 @@ params=optimizer.max['params']
 
 # 5:57
 
-file_name = "BO_Unet_ACDC.pkl"
+file_name = "BO_Unet_v7.pkl"
 # open_file = open(file_name, "wb")
 # pickle.dump(optimizer, open_file)
 # pickle.dump(params, open_file)

@@ -353,7 +353,7 @@ def CreateDataset_StT_P_dcm(path_data):
         for _,file in enumerate(f):
             if file.find('_gt')>0:
                 # if file.find('Joint')>=0 and file.find('_W')<0:
-                # if file.find('post')>=0:
+                if file.find('_m_')>=0:
                     path_mask = os.path.join(path_data, pat_name, file)
                     name = file[0:file.find('_gt')] + file[file.find('_gt')+3:]
                     # path_maps = os.path.join(path_data, pat_name, name+'.nii.gz')
