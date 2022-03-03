@@ -20,12 +20,12 @@ import Network
 
 # 
 # net = Network.Net(enc_chs=(1,32,64,128,256), dec_chs=(256,128,64,32), out_sz=(128,128), head=(128), retain_dim=False, num_class=2)
-# net = torch.load(r"/data/rj21/MyoSeg/Models/net_v3_0_0.pt")
-net = torch.load(r"/data/rj21/MyoSeg/Models/net_v7_0_0.pt")
+net = torch.load(r"/data/rj21/MyoSeg/Models/net_v3_0_0.pt")
+# net = torch.load(r"/data/rj21/MyoSeg/Models/net_v7_0_0.pt")
 # net = torch.load(r"/data/rj21/MyoSeg/Models/net_v5_0_6.pt")
 
 net = net.cuda()
-optimizer = optim.Adam(net.parameters(), lr=0.0024, weight_decay=0.00000)
+optimizer = optim.Adam(net.parameters(), lr=0.001, weight_decay=0.00000)
 # optimizer = optim.SGD(net2.parameters(), lr=0.000001, weight_decay=0.0001, momentum= 0.8)
 scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=50, gamma=0.1, verbose=True)
 
@@ -153,7 +153,7 @@ for epch in range(0,122):
         # Indx = np.random.randint(0,len(data_list_1_train),(batchTr,)).tolist()
         sub_set = list(map(data_list_1_train.__getitem__, Indx))
         
-        params = (128,  80,120,  -170,170,  -10,10,-10,10)
+        params = (128,  100,120,  -170,170,  -10,10,-10,10)
         loss_Joint, res1, Imgs1, Masks1 = Network.Training.straightForward(sub_set, net, params, TrainMode=True, Contrast=False)
                                                    
         # train_loss_Joint.append(loss_Joint.detach().cpu().numpy())
@@ -258,7 +258,7 @@ for epch in range(0,122):
     #     diceTe1.append(dice.detach().cpu().numpy())
         
     ### StT lab
-    params = (128,  80,120,  -0,0,  0,0,0,0)
+    params = (128,  100,120,  -0,0,  0,0,0,0)
     batch = 128
     random.shuffle(data_list_4_test)
     # for num in range(0,len(data_list_4_test), batch):
