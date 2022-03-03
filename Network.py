@@ -23,6 +23,7 @@ class Block(nn.Module):
     
     def forward(self, x):
         x = self.conv1(self.BN(x))
+        x = self.relu(x)
         res = x
         # x = self.conv3(self.conv2(x))
         x = self.conv2(x)
@@ -83,28 +84,31 @@ class BottleNeck(nn.Module):
 
 
 class Net(nn.Module):
-    def __init__(self, enc_chs=(3,64,128,256,512,1024), dec_chs=(1024, 512, 256, 128, 64), num_class=1, retain_dim=False, out_sz=(572,572), head=(64)):
+    def __init__(self, enc_chs=(3,64,128,256,512,1024), dec_chs=(1024, 512, 256, 128, 64), num_class=1, retain_dim=False, out_sz=(572,572), head=(128)):
         super().__init__()
         self.encoder     = Encoder(enc_chs)
         self.bottleneck  = BottleNeck((enc_chs[-1],enc_chs[-1]))
         self.decoder     = Decoder(dec_chs)
-        self.head1        = nn.Conv2d(dec_chs[-1], head, 1)
-        self.head2        = nn.Conv2d(head, num_class, 1)
+        # self.head1       = nn.Conv2d(dec_chs[-1], num_class, 1)
+        self.head1       = nn.Conv2d(dec_chs[-1], head, 3, padding=1)
+        self.head2       = nn.Conv2d(head, num_class, 1, padding=0)
+        # self.head2        = nn.Conv2d(head, num_class, 1)
         self.retain_dim  = retain_dim
         self.out_sz      = out_sz
-        self.DP_H =  nn.Dropout(p=0.5)
+        # self.DP_H =  nn.Dropout(p=0.5)
 
     def forward(self, x):
         enc_ftrs = self.encoder(x)
         OutBN = self.bottleneck(enc_ftrs[::-1][0])
         out      = self.decoder(OutBN, enc_ftrs[::-1][1:])
-        out      = self.head2( self.DP_H( self.head1(out) ))
+        out      = self.head2( self.head1(out) )
+        # out      =  self.head( out ) 
         if self.retain_dim:
             out = F.interpolate(out, self.out_sz)
         return out
     
 class Training(): 
-    def straightForward(data_list, net, params, TrainMode=True, contrast=False): 
+    def straightForward(data_list, net, params, TrainMode=True, Contrast=False): 
 
         net.train(mode=TrainMode)
         batch = len(data_list)
@@ -136,16 +140,29 @@ class Training():
                             'Scale': random.uniform(1.0,1.0),
                             'Flip': np.random.random()>0.5
                             })
-                
+            
+            # if not TrainMode:           
+            # img = Util.resize_with_padding(img,(128,128))
+            # mask = Util.resize_with_padding(mask,(128,128))    
+            
             img = np.expand_dims(img, 0).astype(np.float32)
-            mask = np.expand_dims(mask, 0).astype(np.float32)     
-            if contrast:
-                phi = random.uniform(0,2*np.pi)
-                img = Util.random_contrast(img, [0.2, 3, phi])     
-
-            img = Util.augmentation2(torch.tensor(img), augm_params)
-            mask = Util.augmentation2(torch.tensor(mask), augm_params)
+            mask = np.expand_dims(mask, 0).astype(np.float32)    
+            
+            # if Contrast:
+            #     if random.uniform(0, 1)>0.5:
+            #         phi = random.uniform(0,2*np.pi)
+            #         img = Util.random_contrast(img, [0.2, 3, phi])     
+            
+            img = torch.tensor(img)
+            mask = torch.tensor(mask)
+        # if TrainMode:  
+            img = Util.augmentation2(img, augm_params)
+            mask = Util.augmentation2(mask, augm_params)
             mask = mask>0.5    
+            # if TrainMode:  
+            #     if random.uniform(0, 1)>0.5:
+            #         phi = random.uniform(0,2*np.pi)
+            #         img = Util.random_contrast(img, [0.2, 3, phi])   
         
             Imgs[b,0,:,:] = img
             Masks[b,0,:,:] = mask
@@ -159,7 +176,7 @@ class Training():
     
 
 
-    def Consistency(data_list, net, params, TrainMode=True): 
+    def Consistency(data_list, net, params, TrainMode=True, Contrast=False): 
         
         batch = len(data_list)
        
@@ -192,24 +209,29 @@ class Training():
                             'Scale': random.uniform(1.0,1.0),
                             'Flip': np.random.random()>0.5
                             })
-                   
-        # Imgs_P = Util.augmentation2(Imgs, augm_params)
-        # Imgs_P = torch.nan_to_num(Imgs_P, nan=0.0)
-        Imgs_P = Imgs
         
-        phi = random.uniform(0,2*np.pi)
-        Imgs_P = Util.random_contrast_Torch(Imgs_P, [0.2, 3, phi])
+        # Imgs = torch.nan_to_num(Imgs, nan=0.0)           
+        Imgs_P = Util.augmentation2(Imgs, augm_params)
+        Imgs_P = torch.nan_to_num(Imgs_P, nan=0.0)
+        # Imgs_P = Imgs
+        
+        # if Contrast:
+        #     if random.uniform(0, 1)>0.5:
+        #         phi = random.uniform(0,2*np.pi)
+        #         Imgs_P = Util.random_contrast(Imgs_P, [0.2, 3, phi])   
         
         net.train(mode=TrainMode)
-    # with torch.no_grad(): 
+        # net.train(mode=False)
+    # with torch.no_grad():
         res = net( Imgs.cuda() )
         res = torch.softmax(res,dim=1)
         res_P = net( Imgs_P.cuda() )
         res_P = torch.softmax(res_P,dim=1)
  
         res = Util.augmentation2(res[:,[0],:,:], augm_params)
-        # MSE = nn.MSELoss()
-        # loss = MSE(res, res_P[:,[0],:,:])
+        # # MSE = nn.MSELoss()
+        # # loss = MSE(res, res_P[:,[0],:,:])
         loss = Util.dice_loss( res, res_P[:,[0],:,:] )
-        # return loss, res, Imgs, Masks    
+ 
         return loss, Imgs_P, res, res_P
+        # return loss, Imgs_P, res, res_P

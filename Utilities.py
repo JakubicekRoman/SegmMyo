@@ -8,6 +8,7 @@ import pydicom as dcm
 import torchvision.transforms as T
 import cv2
 import SimpleITK as sitk
+from scipy.stats import norm
 
 import matplotlib.pyplot as plt
 
@@ -60,8 +61,8 @@ def augmentation2(img, params):
     augm_img = T.CenterCrop(size=CenterCrop)(augm_img)
     resize = T.Resize((128,128), T.InterpolationMode('bilinear'))
     augm_img = resize(augm_img)
-    augm_img = (augm_img - torch.min(augm_img))/ (torch.max(augm_img)-torch.min(augm_img))
-    augm_img = T.functional.adjust_sharpness(augm_img, 2)
+    # augm_img = (augm_img - torch.min(augm_img))/ (torch.max(augm_img)-torch.min(augm_img))
+    # augm_img = T.functional.adjust_sharpness(augm_img, 2)
 
     return augm_img
 
@@ -126,11 +127,10 @@ def random_contrast_Torch(x,params):
     return y
 
 def crop_min(img):
-    
     s = min( img.shape)
     img = img[0:s,0:s]
-    
     return img
+
 
 def crop_center(img, new_width=None, new_height=None):        
     width = img.shape[1]
@@ -189,6 +189,14 @@ def MASD_compute(A, B):
     HD = np.mean(distA[B_ctr>0])  
 
     return HD
+
+def rand_norm_distrb(N, mu, std, n_range):
+    pd = norm(mu,std)
+    rmin = pd.cdf(n_range[0])
+    rmax =  pd.cdf(n_range[1])
+    rUnif = (rmax-rmin)*np.random.rand(N) + rmin;
+    fcn = pd.ppf(rUnif)
+    return fcn
 
 
 def CreateDataset(path_data, ):      
@@ -345,7 +353,7 @@ def CreateDataset_StT_P_dcm(path_data):
         for _,file in enumerate(f):
             if file.find('_gt')>0:
                 # if file.find('Joint')>=0 and file.find('_W')<0:
-                # if file.find('Joint')>=0:
+                # if file.find('post')>=0:
                     path_mask = os.path.join(path_data, pat_name, file)
                     name = file[0:file.find('_gt')] + file[file.find('_gt')+3:]
                     # path_maps = os.path.join(path_data, pat_name, name+'.nii.gz')
@@ -380,7 +388,7 @@ def CreateDataset_StT_UnL_dcm(path_data):
     p = sorted(p)
     for ii in range(0,len(p)):
         pat_name = p[ii]
-        if not( pat_name.find('P')>=0 and int(pat_name[1:-1])<=30 ):
+        if not( pat_name.find('P')>=0 and int(pat_name[1:-1])<=30 and int(pat_name[1:-1])>=150 ):
             pthX = os.path.join(path_data, pat_name)
             if os.path.isdir(pthX):
                 f = os.listdir(pthX)
@@ -403,6 +411,42 @@ def CreateDataset_StT_UnL_dcm(path_data):
             
     return data_list_tr
 
+
+def CreateDataset_MyoPS_dcm(path_data):
+    data_list_tr = []
+    iii=0
+    p = os.listdir(path_data)
+    for ii in range(0,len(p)):
+        pat_name = p[ii]
+        f = os.listdir(os.path.join(path_data, pat_name))
+        for _,file in enumerate(f):
+            if file.find('_gt')>0:
+                # if file.find('Joint')>=0 and file.find('_W')<0:
+                # if file.find('Joint')>=0:
+                    seq = file.split('_')
+                    path_mask = os.path.join(path_data, pat_name, file)
+                    name = file[0:file.find('_gt')] + file[file.find('_gt')+3:]
+                    # path_maps = os.path.join(path_data, pat_name, name+'.nii.gz')
+                    path_maps = os.path.join(path_data, pat_name, name)
+                    
+                # if file.find('_W4')>=0:   
+                    # sizeData = Loaders.size( path_maps )
+                    sizeData = size_nii( path_maps )
+
+                    if len(sizeData)==2:
+                        sizeData = sizeData + (1,)
+                    # print(sizeData)
+                    
+                    for sl in range(0,sizeData[2]):
+                        data_list_tr.append( {'img_path': path_maps,
+                                              'mask_path': path_mask,
+                                              'pat_name': pat_name,
+                                              'file_name': name,
+                                              'slice': seq[4],
+                                              'Seq': seq[3],
+                                              'ID_pat': ii,
+                                              } )
+    return data_list_tr
 
 
 def save_to_excel(dataframe, root_dir, name):
