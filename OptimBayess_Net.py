@@ -13,7 +13,6 @@ import Network
 
 
 def get_value(**params):
-    
     lr         = params['lr']
     batch      = params['batch']
     step_size  = params['step_size']
@@ -24,8 +23,8 @@ def get_value(**params):
     step_size = int(np.round(step_size))
     
     
-    net = Network.Net(enc_chs=(1,32,64,128,256), dec_chs=(256,128,64,32), out_sz=(128,128), head=(128), retain_dim=False, num_class=2)
-    
+    # net = Network.Net(enc_chs=(1,32,64,128,256), dec_chs=(256,128,64,32), out_sz=(128,128), head=(128), retain_dim=False, num_class=2)
+    net = torch.load(r"/data/rj21/MyoSeg/Models/net_v3_0_0.pt")
     
     net = net.cuda()
     optimizer = optim.Adam(net.parameters(), lr=lr, weight_decay=0.000001)
@@ -82,7 +81,7 @@ def get_value(**params):
     mu5, sigma5 = len(data_list_5_train)/10 ,  sigma*len(data_list_5_train)
     mu6, sigma6 = len(data_list_6_train)/10 ,  sigma*len(data_list_6_train)
     
-    for epch in range(0,80):
+    for epch in range(0,50):
         net.train(mode=True)
         diceTr1=[]
         diceTr2=[]
@@ -101,7 +100,7 @@ def get_value(**params):
         Inds5=[]
         Inds6=[]
             
-        for num_ite in range(0,100):
+        for num_ite in range(0,10):
           
         ## Pro StT our dataset JOINT
             Indx = Util.rand_norm_distrb(batchTr, mu1, sigma1, [0,len(data_list_1_train)]).astype('int')
@@ -111,7 +110,7 @@ def get_value(**params):
             params = (128,  80,120,  -170,170,  -10,10,-10,10)
             loss_Joint, res1, Imgs1, Masks1 = Network.Training.straightForward(sub_set, net, params, TrainMode=True, Contrast=False)
                                                        
-            dice = Util.dice_coef( res1[:,0,:,:]>0.5, Masks1[:,0,:,:].cuda() )                
+            dice = Util.dice_coef_batch( res1[:,0,:,:]>0.5, Masks1[:,0,:,:].cuda() )                
             diceTr1.append(dice.detach().cpu().numpy())
             Inds1.append(Indx)
             
@@ -122,7 +121,7 @@ def get_value(**params):
             
             loss_Clin, res1, Imgs1, Masks1 = Network.Training.straightForward(sub_set, net, params, TrainMode=True, Contrast=False)
                                                        
-            dice = Util.dice_coef( res1[:,0,:,:]>0.5, Masks1[:,0,:,:].cuda() )                
+            dice = Util.dice_coef_batch( res1[:,0,:,:]>0.5, Masks1[:,0,:,:].cuda() )                
             diceTr4.append(dice.detach().cpu().numpy())
             Inds4.append(Indx)
             
@@ -133,7 +132,7 @@ def get_value(**params):
             
             loss_MyoPS, res1, Imgs1, Masks1 = Network.Training.straightForward(sub_set, net, params, TrainMode=True, Contrast=False)
                                                        
-            dice = Util.dice_coef( res1[:,0,:,:]>0.5, Masks1[:,0,:,:].cuda() )                
+            dice = Util.dice_coef_batch( res1[:,0,:,:]>0.5, Masks1[:,0,:,:].cuda() )                
             diceTr5.append(dice.detach().cpu().numpy())
             Inds5.append(Indx)    
             
@@ -144,7 +143,7 @@ def get_value(**params):
             
             loss_Emidec, res1, Imgs1, Masks1 = Network.Training.straightForward(sub_set, net, params, TrainMode=True, Contrast=False)
                                                        
-            dice = Util.dice_coef( res1[:,0,:,:]>0.5, Masks1[:,0,:,:].cuda() )                
+            dice = Util.dice_coef_batch( res1[:,0,:,:]>0.5, Masks1[:,0,:,:].cuda() )                
             diceTr6.append(dice.detach().cpu().numpy())
             Inds6.append(Indx) 
         
@@ -171,10 +170,10 @@ def get_value(**params):
         
         ### StT lab
         params = (128,  80,120,  -0,0,  0,0,0,0)
-        batch = 128
+        batchTE = 128
         random.shuffle(data_list_4_test)
         for num in range(0,4):   
-            sub_set = data_list_4_test[num:num+batch]
+            sub_set = data_list_4_test[num:num+batchTE]
             with torch.no_grad():
                 _, resTE, ImgsTe, MasksTE = Network.Training.straightForward(sub_set, net, params, TrainMode=False, Contrast=False)       
                              
@@ -187,9 +186,9 @@ def get_value(**params):
             #     HD4.append (np.max((Util.MASD_compute(A,B),Util.MASD_compute(B,A))))
         
         
-        torch.cuda.empty_cache()
-
+        # print(np.mean(diceTe4))
         
+                         
         D1 = D1[D1[:, 0].argsort()]
         D1[np.concatenate(np.array(Inds1)),1] = np.concatenate(np.tile(np.array(diceTr1),(batchTr,1)).T)
         D1 = D1[D1[:, 1].argsort()]
@@ -202,9 +201,11 @@ def get_value(**params):
         D6 = D6[D6[:, 0].argsort()]
         D6[np.concatenate(np.array(Inds6)),1] = np.concatenate(np.tile(np.array(diceTr6),(batchTr,1)).T)
         D6 = D6[D6[:, 1].argsort()]
-        
-            
      
+        torch.cuda.empty_cache()
+    
+
+  
     
     return np.mean(diceTe4)
         
@@ -220,16 +221,16 @@ def get_value(**params):
 # pbounds=dict(zip(param_names, zip(bounds_lw,bounds_up)))  
 
     
-pbounds = {'lr':[0.000001,0.01],
-           'batch':[8,24],
-           'sigma':[0.5,2.0],
-           'step_size':[10,40],
-           'lambda_cons':[0.0,0.1]
+pbounds = {'lr':[0.00001,0.01],
+           'batch':[28,128],
+           'sigma':[0.7,1.2],
+           'step_size':[15,40],
+           'lambda_cons':[0.001,0.01]
            }  
 
 optimizer = BayesianOptimization(f = get_value, pbounds=pbounds,random_state=1)  
 
-optimizer.maximize(init_points=2,n_iter=20)
+optimizer.maximize(init_points=3,n_iter=40)
 
 print(optimizer.max)
 
@@ -247,3 +248,7 @@ file_name = "BO_Unet_v7.pkl"
 open_file = open(file_name, "wb")
 pickle.dump(params, open_file)
 open_file.close()
+
+# open_file = open(file_name, "rb")
+# data_list_test = pickle.load(open_file)
+# open_file.close()

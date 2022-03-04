@@ -177,6 +177,11 @@ def dice_coef(X, Y):
     dice = ((2. * torch.sum(X*Y) + eps) / (torch.sum(X) + torch.sum(Y) + eps) )
     return dice
 
+def dice_coef_batch(X, Y):
+    eps = 0.000001
+    dice = ((2. * torch.sum(X*Y,(1, 2)) + eps) / (torch.sum(X,(1, 2)) + torch.sum(Y,(1, 2)) + eps) )
+    return dice
+
 def MASD_compute(A, B):
     
     A  = A.astype(np.dtype('uint8'))
