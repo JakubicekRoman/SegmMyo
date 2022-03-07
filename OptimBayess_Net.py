@@ -110,7 +110,7 @@ def get_value(**params):
             params = (128,  80,120,  -170,170,  -10,10,-10,10)
             loss_Joint, res1, Imgs1, Masks1 = Network.Training.straightForward(sub_set, net, params, TrainMode=True, Contrast=False)
                                                        
-            dice = Util.dice_coef_batch( res1[:,0,:,:]>0.5, Masks1[:,0,:,:].cuda() )                
+            dice = Util.dice_coef( res1[:,0,:,:]>0.5, Masks1[:,0,:,:].cuda() )                
             diceTr1.append(dice.detach().cpu().numpy())
             Inds1.append(Indx)
             
@@ -121,7 +121,7 @@ def get_value(**params):
             
             loss_Clin, res1, Imgs1, Masks1 = Network.Training.straightForward(sub_set, net, params, TrainMode=True, Contrast=False)
                                                        
-            dice = Util.dice_coef_batch( res1[:,0,:,:]>0.5, Masks1[:,0,:,:].cuda() )                
+            dice = Util.dice_coef( res1[:,0,:,:]>0.5, Masks1[:,0,:,:].cuda() )                
             diceTr4.append(dice.detach().cpu().numpy())
             Inds4.append(Indx)
             
@@ -132,7 +132,7 @@ def get_value(**params):
             
             loss_MyoPS, res1, Imgs1, Masks1 = Network.Training.straightForward(sub_set, net, params, TrainMode=True, Contrast=False)
                                                        
-            dice = Util.dice_coef_batch( res1[:,0,:,:]>0.5, Masks1[:,0,:,:].cuda() )                
+            dice = Util.dice_coef( res1[:,0,:,:]>0.5, Masks1[:,0,:,:].cuda() )                
             diceTr5.append(dice.detach().cpu().numpy())
             Inds5.append(Indx)    
             
@@ -143,7 +143,7 @@ def get_value(**params):
             
             loss_Emidec, res1, Imgs1, Masks1 = Network.Training.straightForward(sub_set, net, params, TrainMode=True, Contrast=False)
                                                        
-            dice = Util.dice_coef_batch( res1[:,0,:,:]>0.5, Masks1[:,0,:,:].cuda() )                
+            dice = Util.dice_coef( res1[:,0,:,:]>0.5, Masks1[:,0,:,:].cuda() )                
             diceTr6.append(dice.detach().cpu().numpy())
             Inds6.append(Indx) 
         
@@ -222,7 +222,7 @@ def get_value(**params):
 
     
 pbounds = {'lr':[0.00001,0.01],
-           'batch':[28,128],
+           'batch':[28,64],
            'sigma':[0.7,1.2],
            'step_size':[15,40],
            'lambda_cons':[0.001,0.01]
@@ -230,7 +230,7 @@ pbounds = {'lr':[0.00001,0.01],
 
 optimizer = BayesianOptimization(f = get_value, pbounds=pbounds,random_state=1)  
 
-optimizer.maximize(init_points=3,n_iter=40)
+optimizer.maximize(init_points=2,n_iter=10)
 
 print(optimizer.max)
 
@@ -239,7 +239,7 @@ params=optimizer.max['params']
 
 # 5:57
 
-file_name = "BO_Unet_v7.pkl"
+file_name = "BO_Unet_v7_1.pkl"
 # open_file = open(file_name, "wb")
 # pickle.dump(optimizer, open_file)
 # pickle.dump(params, open_file)
