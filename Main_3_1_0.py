@@ -29,6 +29,7 @@ sigma      = 0.7
 lambda_Cons = 0.01
 lambda_Other = 0.5
 num_ite    = 50
+num_epch = 100
 
 
 batchTr = int(np.round(batch))
@@ -69,7 +70,7 @@ D2 = np.zeros((len(data_list_2_train),2))
 D2[:,0] = np.arange(0,len(data_list_2_train))
    
 
-for epch in range(0,50):
+for epch in range(0,num_epch):
     mu1, sigma1 = len(data_list_1_train)/10 , sigma*len(data_list_1_train)
     mu2, sigma2 = len(data_list_2_train)/10 ,  sigma*len(data_list_2_train)
     

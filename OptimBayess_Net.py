@@ -24,14 +24,15 @@ def get_value(**params):
     
     lambda_Cons = 0.01
     lambda_Other = 0.5
+    num_epch = 80
 
     
     batchTr = int(np.round(batch))
     step_size = int(np.round(step_size))
     num_ite = int(np.round(num_ite))
      
-    net = torch.load(r"/data/rj21/MyoSeg/Models/net_v7_0_0.pt")
-    # net = torch.load(r"/data/rj21/MyoSeg/Models/net_v5_0_6.pt")
+    # net = torch.load(r"/data/rj21/MyoSeg/Models/net_v7_0_0.pt")
+    net = torch.load(r"/data/rj21/MyoSeg/Models/net_v3_0_0.pt")
     
     net = net.cuda()
     optimizer = optim.Adam(net.parameters(), lr=lr, weight_decay=0.00000001)
@@ -64,7 +65,7 @@ def get_value(**params):
     D2[:,0] = np.arange(0,len(data_list_2_train))
        
     
-    for epch in range(0,50):
+    for epch in range(0,num_epch):
         mu1, sigma1 = len(data_list_1_train)/10 , sigma*len(data_list_1_train)
         mu2, sigma2 = len(data_list_2_train)/10 ,  sigma*len(data_list_2_train)
         
@@ -73,7 +74,7 @@ def get_value(**params):
         # if epch>10:
         #     sigma = 0.7
     
-        diceTr1=[]; diceTr2=[]; diceTr3=[]; diceTe1=[]; iceTe2=[];  HD1=[]
+        diceTr1=[]; diceTr2=[]; diceTr3=[]; diceTe1=[]; diceTe2=[];  HD1=[]
         Inds1=[]; Inds2=[]; Inds4=[]; Inds5=[];   Inds6=[]
                    
         # for num_ite in range(0,len(data_list_1_train)-batch-1, batch):
@@ -110,18 +111,18 @@ def get_value(**params):
             D2 = D2[D2[:, 1].argsort()]
         
         ## Consistency regularization
-            params = (128,  80,120,  -170,170,  -10,10,-10,10)
-            batchCons = 16
-            Indx = np.random.randint(0,len(data_list_3_train),(batchCons,)).tolist()
-            sub_set = list(map(data_list_3_train.__getitem__, Indx))
-            loss_cons, Imgs_P, res, res_P = Network.Training.Consistency(sub_set, net, params, TrainMode=True, Contrast=False)
-            diceTr3.append(1 - loss_cons.detach().cpu().numpy())
+            # params = (128,  80,120,  -170,170,  -10,10,-10,10)
+            # batchCons = 16
+            # Indx = np.random.randint(0,len(data_list_3_train),(batchCons,)).tolist()
+            # sub_set = list(map(data_list_3_train.__getitem__, Indx))
+            # loss_cons, Imgs_P, res, res_P = Network.Training.Consistency(sub_set, net, params, TrainMode=True, Contrast=False)
+            # diceTr3.append(1 - loss_cons.detach().cpu().numpy())
             
         ## backF - training
             net.train(mode=True)
             if epch>0:
-                # loss = loss_Joint + loss_Clin + 0.01*loss_cons
-                loss = loss_Clin + lambda_Other*loss_Other + lambda_Cons*loss_cons
+                loss = loss_Clin + lambda_Other*loss_Other
+                # loss = loss_Clin + lambda_Other*loss_Other + lambda_Cons*loss_cons
                 optimizer.zero_grad()
                 loss.backward()
                 # torch.nn.utils.clip_grad_value_(net.parameters(), clip_value=1.0)
@@ -138,29 +139,26 @@ def get_value(**params):
         if epch>0:
             scheduler.step()
             
-        net.train(mode=False)
-       
-        ### StT lab
-        params = (128,  80,120,  -0,0,  0,0,0,0)
-        batch = 256
-        random.shuffle(data_list_1_test)
-        # for num in range(0,len(data_list_4_test), batch):
-        for num in range(0,2):   
-            sub_set = data_list_1_test[num:num+batch]
-            with torch.no_grad():
-                _, resTE, ImgsTe, MasksTE = Network.Training.straightForward(sub_set, net, params, TrainMode=False, Contrast=False)       
-                             
-            dice = Util.dice_coef( resTE[:,0,:,:]>0.5, MasksTE[:,0,:,:].cuda() )                
-            diceTe1.append(dice.detach().cpu().numpy())
-             
-            for b in range(0,batch):
-                A = resTE[b,0,:,:].detach().cpu().numpy()>0.5
-                B = MasksTE[b,0,:,:].detach().cpu().numpy()>0.5
-                HD1.append (np.max((Util.MASD_compute(A,B),Util.MASD_compute(B,A))))
-        
-        torch.cuda.empty_cache()  
+    net.train(mode=False)
+    ### StT lab
+    params = (128,  80,120,  -0,0,  0,0,0,0)
+    batch = 256
+    random.shuffle(data_list_1_test)
+    # for num in range(0,len(data_list_4_test), batch):
+    for num in range(0,2):   
+        sub_set = data_list_1_test[num:num+batch]
+        with torch.no_grad():
+            _, resTE, ImgsTe, MasksTE = Network.Training.straightForward(sub_set, net, params, TrainMode=False, Contrast=False)       
+                         
+        dice = Util.dice_coef( resTE[:,0,:,:]>0.5, MasksTE[:,0,:,:].cuda() )                
+        diceTe1.append(dice.detach().cpu().numpy())
+         
+        # for b in range(0,batch):
+        #     A = resTE[b,0,:,:].detach().cpu().numpy()>0.5
+        #     B = MasksTE[b,0,:,:].detach().cpu().numpy()>0.5
+        #     HD1.append (np.max((Util.MASD_compute(A,B),Util.MASD_compute(B,A))))
     
-    
+    torch.cuda.empty_cache()  
     
     return np.mean(diceTe1)
         
@@ -176,8 +174,8 @@ def get_value(**params):
 # pbounds=dict(zip(param_names, zip(bounds_lw,bounds_up)))  
 
     
-pbounds = {'lr':[0.00001,0.01],
-           'batch':[16,64],
+pbounds = {'lr':[0.00001,0.001],
+           'batch':[8,64],
            'sigma':[0.5,1.5],
            'step_size':[15,40],
            'num_ite' :[20, 70]
