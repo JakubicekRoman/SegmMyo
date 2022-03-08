@@ -17,7 +17,7 @@ import pickle
 import pydicom as dcm
 
 import Utilities as Util
-# import Loaders
+import Loaders
 import Network
 
 
@@ -28,7 +28,7 @@ import Network
 
 ## StT LABELLED - P1-30
 path_data = '/data/rj21/Data/Data_StT_Labaled'  # Linux bioeng358
-data_list = Util.CreateDataset_StT_P_dcm(os.path.normpath( path_data ))
+data_list = Loaders.CreateDataset_StT_P_dcm(os.path.normpath( path_data ),'','')
 data_list_test = data_list
 # b = int(len(data_list)*0.55)
 # data_list_test = data_list[b+1:]
@@ -49,14 +49,15 @@ data_list_test = data_list
 # version = "v3_1_9_5"
 # version = "v3_3_4"
 version = "v5_1_1"
-# version = "v7_0_0"
+# version = "v8_0_1"
+
 # net = torch.load(r"/data/rj21/MyoSeg/Models/net_v3_0_0.pt")
 # net = torch.load(r"/data/rj21/MyoSeg/Models/net_v1_5.pt")
 net = torch.load(r"/data/rj21/MyoSeg/Models/net_" + version + ".pt")
 net = net.cuda()
 
-path_save = '/data/rj21/MyoSeg/valid/Main_7'
-save_name = 'P_valid'
+path_save = '/data/rj21/MyoSeg/valid/Main_8'
+save_name = 'PA_valid'
 
 
 # path_save = '/data/rj21/MyoSeg/valid'
@@ -145,44 +146,44 @@ for num in range(0,len(data_list_test),1):
     
     print(data_list_test[num]['file_name'])
 
-    resB = (res[0,0,:,:].detach().cpu().numpy()>0.5).astype(np.dtype('uint8'))
-    dimg = cv2.dilate(resB, cv2.getStructuringElement(cv2.MORPH_ELLIPSE,(3,3)) )
-    ctr = dimg - resB
+    # resB = (res[0,0,:,:].detach().cpu().numpy()>0.5).astype(np.dtype('uint8'))
+    # dimg = cv2.dilate(resB, cv2.getStructuringElement(cv2.MORPH_ELLIPSE,(3,3)) )
+    # ctr = dimg - resB
     
-    GT = (Masks[0,0,:,:].detach().cpu().numpy()>0.5).astype(np.dtype('uint8'))
-    dimg = cv2.dilate(GT, cv2.getStructuringElement(cv2.MORPH_ELLIPSE,(3,3)) )
-    ctrGT = dimg - GT
+    # GT = (Masks[0,0,:,:].detach().cpu().numpy()>0.5).astype(np.dtype('uint8'))
+    # dimg = cv2.dilate(GT, cv2.getStructuringElement(cv2.MORPH_ELLIPSE,(3,3)) )
+    # ctrGT = dimg - GT
     
-    imgB = Imgs[0,0,:,:].detach().numpy()
-    imgB = ( imgB - imgB.min() ) / (imgB.max() - imgB.min())
-    RGB_imgB = cv2.cvtColor(imgB,cv2.COLOR_GRAY2RGB)
+    # imgB = Imgs[0,0,:,:].detach().numpy()
+    # imgB = ( imgB - imgB.min() ) / (imgB.max() - imgB.min())
+    # RGB_imgB = cv2.cvtColor(imgB,cv2.COLOR_GRAY2RGB)
     
-    comp = RGB_imgB[:,:,0]
-    comp[ctr==1]=1
-    comp[ctrGT==1]=0
-    RGB_imgB[:,:,0] = comp
+    # comp = RGB_imgB[:,:,0]
+    # comp[ctr==1]=1
+    # comp[ctrGT==1]=0
+    # RGB_imgB[:,:,0] = comp
     
-    comp = RGB_imgB[:,:,1]
-    comp[ctr==1]=0
-    comp[ctrGT==1]=1
-    RGB_imgB[:,:,1] = comp
+    # comp = RGB_imgB[:,:,1]
+    # comp[ctr==1]=0
+    # comp[ctrGT==1]=1
+    # RGB_imgB[:,:,1] = comp
     
-    comp = RGB_imgB[:,:,2]
-    comp[ctr==1]=0
-    comp[ctrGT==1]=0
-    RGB_imgB[:,:,2] = comp
+    # comp = RGB_imgB[:,:,2]
+    # comp[ctr==1]=0
+    # comp[ctrGT==1]=0
+    # RGB_imgB[:,:,2] = comp
     
-    Fig = plt.figure()
-    plt.imshow(RGB_imgB)
-    # plt.show()
-    # plt.draw()
+    # Fig = plt.figure()
+    # plt.imshow(RGB_imgB)
+    # # plt.show()
+    # # plt.draw()
     
-    # ID_image = '000000'+str(iii)
-    # ID_image = ID_image[-4:]
-    # iii=iii+1
+    # # ID_image = '000000'+str(iii)
+    # # ID_image = ID_image[-4:]
+    # # iii=iii+1
     
-    Fig.savefig( path_save + '/' + 'res_' + "%.4f" % (dice.item()) + '_' +  nPat + file_name.split('_')[0] + '_' + seq + '_' + current_index + '.png', dpi=150)
-    plt.close(Fig)
+    # Fig.savefig( path_save + '/' + 'res_' + "%.4f" % (dice.item()) + '_' +  nPat + file_name.split('_')[0] + '_' + seq + '_' + current_index + '.png', dpi=150)
+    # plt.close(Fig)
     
 
     
