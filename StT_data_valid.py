@@ -57,7 +57,7 @@ net = torch.load(r"/data/rj21/MyoSeg/Models/net_" + version + ".pt")
 net = net.cuda()
 
 path_save = '/data/rj21/MyoSeg/valid/Main_8'
-save_name = 'PA_valid'
+save_name = 'PA_valid2'
 
 
 # path_save = '/data/rj21/MyoSeg/valid'
@@ -96,25 +96,30 @@ for num in range(0,len(data_list_test),1):
     
     vel.append(img.shape)
     
-    # img = Util.crop_center(img, new_width=128, new_height=128)
-    # mask = Util.crop_center(mask, new_width=128, new_height=128)
-    
+    img = Util.crop_center(img, new_width=100, new_height=100)
+    mask = Util.crop_center(mask, new_width=100, new_height=100)
+
+
     img = torch.tensor(np.expand_dims(img, 0).astype(np.float32))
     mask = torch.tensor(np.expand_dims(mask, 0).astype(np.float32))
     
-    params = (128,  100,100,  -0,0,  0,0,0,0)
-    augm_params=[]
-    augm_params.append({'Output_size': params[0],
-                        'Crop_size': random.randint(params[1],params[2]),
-                        'Angle': random.randint(params[3],params[4]),
-                        'Transl': (random.randint(params[5],params[6]),random.randint(params[7],params[8])),
-                        'Scale': random.uniform(1.0,1.0),
-                        'Flip': False
-                        })
-    img = Util.augmentation2(img, augm_params)
-    mask = Util.augmentation2(mask, augm_params)
-    mask = mask>0.5
+    resize = T.Resize((128,128), T.InterpolationMode('bilinear'))
+    img = resize(img)
+    resize = T.Resize((128,128), T.InterpolationMode('nearest'))
+    mask = resize(mask)
     
+    # params = (128,  100,100,  -0,0,  0,0,0,0)
+    # augm_params=[]
+    # augm_params.append({'Output_size': params[0],
+    #                     'Crop_size': random.randint(params[1],params[2]),
+    #                     'Angle': random.randint(params[3],params[4]),
+    #                     'Transl': (random.randint(params[5],params[6]),random.randint(params[7],params[8])),
+    #                     'Scale': random.uniform(1.0,1.0),
+    #                     'Flip': False
+    #                     })
+    # img = Util.augmentation2(img, augm_params)
+    # mask = Util.augmentation2(mask, augm_params)
+    # mask = mask>0.5
     
     Imgs[0,0,:,:] = img
     Masks[0,0,:,:] = mask
@@ -139,7 +144,7 @@ for num in range(0,len(data_list_test),1):
     res_table.loc[(num,'Slice')] =   current_index 
     res_table.loc[(num,'Dataset')] =   file_name.split('_')[0] 
     res_table.loc[(num,'Seq')] =   seq
-    res_table.loc[(num,'HD')] =   HD     
+    res_table.loc[(num,'HD')] =   HD
     res_table.loc[(num,'Dice')] =   dice.item()
     res_table.loc[(num,'ID_image')] =   iii
 

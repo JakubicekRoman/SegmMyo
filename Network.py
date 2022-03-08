@@ -23,7 +23,7 @@ class Block(nn.Module):
     
     def forward(self, x):
         x = self.conv1(self.BN(x))
-        # x = self.relu(x)    # for v7_0_0
+        x = self.relu(x)    # for v7_0_0
         res = x
         # x = self.conv3(self.conv2(x))
         x = self.conv2(x)
@@ -89,9 +89,9 @@ class Net(nn.Module):
         self.encoder     = Encoder(enc_chs)
         self.bottleneck  = BottleNeck((enc_chs[-1],enc_chs[-1]))
         self.decoder     = Decoder(dec_chs)
-        self.head        = nn.Conv2d(dec_chs[-1], num_class, 1)
-        # self.head1       = nn.Conv2d(dec_chs[-1], head, 3, padding=1)
-        # self.head2       = nn.Conv2d(head, num_class, 1, padding=0)
+        # self.head        = nn.Conv2d(dec_chs[-1], num_class, 1)
+        self.head1       = nn.Conv2d(dec_chs[-1], head, 3, padding=1)
+        self.head2       = nn.Conv2d(head, num_class, 1, padding=0)
         self.retain_dim  = retain_dim
         self.out_sz      = out_sz
         self.relu       = nn.ReLU()
@@ -101,9 +101,8 @@ class Net(nn.Module):
         enc_ftrs = self.encoder(x)
         OutBN = self.bottleneck(enc_ftrs[::-1][0])
         out      = self.decoder(OutBN, enc_ftrs[::-1][1:])
-        # out      = self.head2( self.relu ( self.head( out ) ) )     # for scratch
-        # out      = self.head2(  self.head1( out )  )     # for v7_0_0
-        out      =  self.head( out ) 
+        out      = self.head2(  self.head1( out )  )     # for v7_0_0
+        # out      =  self.head( out ) 
         if self.retain_dim:
             out = F.interpolate(out, self.out_sz)
         return out

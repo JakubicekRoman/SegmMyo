@@ -31,8 +31,8 @@ def get_value(**params):
     step_size = int(np.round(step_size))
     num_ite = int(np.round(num_ite))
      
-    # net = torch.load(r"/data/rj21/MyoSeg/Models/net_v7_0_0.pt")
-    net = torch.load(r"/data/rj21/MyoSeg/Models/net_v3_0_0.pt")
+    net = torch.load(r"/data/rj21/MyoSeg/Models/net_v7_0_0.pt")
+    # net = torch.load(r"/data/rj21/MyoSeg/Models/net_v3_0_0.pt")
     
     net = net.cuda()
     optimizer = optim.Adam(net.parameters(), lr=lr, weight_decay=0.00000001)
@@ -174,7 +174,7 @@ def get_value(**params):
 # pbounds=dict(zip(param_names, zip(bounds_lw,bounds_up)))  
 
     
-pbounds = {'lr':[0.00001,0.001],
+pbounds = {'lr':[0.00001,0.01],
            'batch':[8,64],
            'sigma':[0.5,1.5],
            'step_size':[15,40],

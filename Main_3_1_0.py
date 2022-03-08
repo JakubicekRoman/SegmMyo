@@ -19,16 +19,13 @@ import Loaders
 import Network
 
 
-# 
-# net = Network.Net(enc_chs=(1,32,64,128,256), dec_chs=(256,128,64,32), out_sz=(128,128), head=(128), retain_dim=False, num_class=2)
-# net = torch.load(r"/data/rj21/MyoSeg/Models/net_v3_0_0.pt")
 lr         = 0.002
 batch      = 64
 step_size  = 20
-sigma      = 0.7
+sigma      = 1.5
 lambda_Cons = 0.01
 lambda_Other = 0.5
-num_ite    = 50
+num_ite    = 34
 num_epch = 100
 
 
@@ -36,8 +33,9 @@ batchTr = int(np.round(batch))
 step_size = int(np.round(step_size))
 num_ite = int(np.round(num_ite))
  
+# net = Network.Net(enc_chs=(1,32,64,128,256), dec_chs=(256,128,64,32), out_sz=(128,128), head=(128), retain_dim=False, num_class=2)
 net = torch.load(r"/data/rj21/MyoSeg/Models/net_v7_0_0.pt")
-# net = torch.load(r"/data/rj21/MyoSeg/Models/net_v5_0_6.pt")
+# net = torch.load(r"/data/rj21/MyoSeg/Models/net_v3_0_0.pt")
 
 net = net.cuda()
 optimizer = optim.Adam(net.parameters(), lr=lr, weight_decay=0.00000001)
@@ -46,7 +44,7 @@ scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=step_size, gamma=0.1,
 
 
 data_list_2_train, data_list_3_train = Loaders.CreateDataset()
-random.shuffle(data_list_2_train)
+# random.shuffle(data_list_2_train)
 
 ## StT LABELLED - P1-30
 path_data = '/data/rj21/Data/Data_StT_Labaled'  # Linux bioeng358
@@ -116,24 +114,22 @@ for epch in range(0,num_epch):
         D2 = D2[D2[:, 1].argsort()]
     
     ## Consistency regularization
-        params = (128,  80,120,  -170,170,  -10,10,-10,10)
-        batchCons = 16
-        Indx = np.random.randint(0,len(data_list_3_train),(batchCons,)).tolist()
-        sub_set = list(map(data_list_3_train.__getitem__, Indx))
-        loss_cons, Imgs_P, res, res_P = Network.Training.Consistency(sub_set, net, params, TrainMode=True, Contrast=False)
-        diceTr3.append(1 - loss_cons.detach().cpu().numpy())
+        # params = (128,  80,120,  -170,170,  -10,10,-10,10)
+        # batchCons = 16
+        # Indx = np.random.randint(0,len(data_list_3_train),(batchCons,)).tolist()
+        # sub_set = list(map(data_list_3_train.__getitem__, Indx))
+        # loss_cons, Imgs_P, res, res_P = Network.Training.Consistency(sub_set, net, params, TrainMode=True, Contrast=False)
+        # diceTr3.append(1 - loss_cons.detach().cpu().numpy())
         
     ## backF - training
         net.train(mode=True)
         if epch>0:
-            # loss = loss_Joint + loss_Clin + 0.01*loss_cons
-            loss = loss_Clin + lambda_Other*loss_Other + lambda_Cons*loss_cons
+            loss = loss_Clin + lambda_Other*loss_Other
+            # loss = loss_Clin + lambda_Other*loss_Other + lambda_Cons*loss_cons
             optimizer.zero_grad()
             loss.backward()
             # torch.nn.utils.clip_grad_value_(net.parameters(), clip_value=1.0)
             optimizer.step()
-
-
     
     pd = norm(mu1,sigma1)
     plt.figure()
@@ -151,9 +147,9 @@ for epch in range(0,num_epch):
     ### StT lab
     params = (128,  80,120,  -0,0,  0,0,0,0)
     batch = 256
-    random.shuffle(data_list_1_test)
+    # random.shuffle(data_list_1_test)
     # for num in range(0,len(data_list_4_test), batch):
-    for num in range(0,2):   
+    for num in range(0,3):   
         sub_set = data_list_1_test[num:num+batch]
         with torch.no_grad():
             _, resTE, ImgsTe, MasksTE = Network.Training.straightForward(sub_set, net, params, TrainMode=False, Contrast=False)       
@@ -199,7 +195,7 @@ for epch in range(0,num_epch):
     # plt.legend()
     # plt.show()
     
-version = "v8_1_0"
+version = "v8_0_2"
 torch.save(net, 'Models/net_' + version + '.pt')
 
 file_name = "Models/Res_net_" + version + ".pkl"
