@@ -23,7 +23,7 @@ import Utilities as Util
 # path_data = '/data/rj21/Data/Test_data/example_data'  # Linux bioeng358
 # path_save = '/data/rj21/MyoSeg/Final/Results'
 
-def Predict(path_data, path_save):
+def Predict(path_data, path_save, vNet):
     
     
     data_list = glob.glob(os.path.normpath( path_data + '/**/*.dcm' ), recursive=True)
@@ -37,7 +37,7 @@ def Predict(path_data, path_save):
         file = data_list[i]
         # nextSub = file[len(path_data):]
         
-        net = torch.load("net_v5_1_1.pt")
+        net = torch.load(vNet)
         net = net.cuda()
         
         dataset = dcm.dcmread(file)

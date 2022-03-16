@@ -23,16 +23,22 @@ import Network
 
 # ## StT LABELLED - JOINT
 # path_data = '/data/rj21/Data/Data_Joint_StT_Labelled/Resaved_data_StT_cropped'  # Linux bioeng358
-# data_list = Util.CreateDataset_StT_J_dcm(os.path.normpath( path_data ))
+# data_list = Loaders.CreateDataset_StT_J_dcm(os.path.normpath( path_data ))
 # data_list_test = data_list
 
-## StT LABELLED - P1-30
-path_data = '/data/rj21/Data/Data_StT_Labaled'  # Linux bioeng358
+# ## StT LABELLED - P1-30
+# path_data = '/data/rj21/Data/Data_StT_Labaled'  # Linux bioeng358
+# data_list = Loaders.CreateDataset_StT_P_dcm(os.path.normpath( path_data ),'','')
+# data_list_test = data_list
+# # b = int(len(data_list)*0.55)
+# # data_list_test = data_list[b+1:]
+
+## StT LABELLED - Alina data T2
+path_data = '/data/rj21/Data/Data_T2_Alina/dcm_resaved'  # Linux bioeng358
 data_list = Loaders.CreateDataset_StT_P_dcm(os.path.normpath( path_data ),'','')
 data_list_test = data_list
 # b = int(len(data_list)*0.55)
 # data_list_test = data_list[b+1:]
-
 
 # b = int(len(data_list)*0.7)
 # data_list_train = data_list[1:b]
@@ -48,16 +54,17 @@ data_list_test = data_list
 
 # version = "v3_1_9_5"
 # version = "v3_3_4"
-version = "v5_1_1"
-# version = "v8_0_1"
+# version = "v8_0_3"
+version = "v8_2_1"
 
 # net = torch.load(r"/data/rj21/MyoSeg/Models/net_v3_0_0.pt")
 # net = torch.load(r"/data/rj21/MyoSeg/Models/net_v1_5.pt")
 net = torch.load(r"/data/rj21/MyoSeg/Models/net_" + version + ".pt")
 net = net.cuda()
 
-path_save = '/data/rj21/MyoSeg/valid/Main_8'
-save_name = 'PA_valid2'
+path_save = '/data/rj21/MyoSeg/valid/Main_8_T2A'
+# save_name = 'Joint_valid'
+save_name = 'T2A_valid'
 
 
 # path_save = '/data/rj21/MyoSeg/valid'
@@ -72,7 +79,7 @@ diceTe=[]
 vel=[]
 iii=0
 
-for num in range(0,len(data_list_test),1):
+for num in range(0,len(data_list_test),4):
 # for num in range(0,100,1):    
 
     Imgs = torch.tensor(np.zeros((1,1,128,128) ), dtype=torch.float32)
@@ -96,18 +103,12 @@ for num in range(0,len(data_list_test),1):
     
     vel.append(img.shape)
     
-    img = Util.crop_center(img, new_width=100, new_height=100)
-    mask = Util.crop_center(mask, new_width=100, new_height=100)
-
+    img, p_cut, p_pad = Util.crop_center_final(img,128,128)
+    mask, p_cut, p_pad = Util.crop_center_final(mask,128,128)
 
     img = torch.tensor(np.expand_dims(img, 0).astype(np.float32))
     mask = torch.tensor(np.expand_dims(mask, 0).astype(np.float32))
-    
-    resize = T.Resize((128,128), T.InterpolationMode('bilinear'))
-    img = resize(img)
-    resize = T.Resize((128,128), T.InterpolationMode('nearest'))
-    mask = resize(mask)
-    
+       
     # params = (128,  100,100,  -0,0,  0,0,0,0)
     # augm_params=[]
     # augm_params.append({'Output_size': params[0],
@@ -180,8 +181,8 @@ for num in range(0,len(data_list_test),1):
     
     # Fig = plt.figure()
     # plt.imshow(RGB_imgB)
-    # # plt.show()
-    # # plt.draw()
+    # plt.show()
+    # plt.draw()
     
     # # ID_image = '000000'+str(iii)
     # # ID_image = ID_image[-4:]

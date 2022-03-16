@@ -23,7 +23,7 @@ def get_value(**params):
     num_ite    = params['num_ite']
     
     lambda_Cons = 0.01
-    lambda_Other = 0.5
+    lambda_Other = params['lambda_Other']
     num_epch = 80
 
     
@@ -174,11 +174,12 @@ def get_value(**params):
 # pbounds=dict(zip(param_names, zip(bounds_lw,bounds_up)))  
 
     
-pbounds = {'lr':[0.00001,0.01],
+pbounds = {'lr':[0.00001,0.005],
            'batch':[8,64],
            'sigma':[0.5,1.5],
            'step_size':[15,40],
-           'num_ite' :[20, 70]
+            'num_ite' :[20, 80],
+           'lambda_Other' :[0.2,1.0]
            # 'lambda_cons':[0.001,0.01]
            }  
 
