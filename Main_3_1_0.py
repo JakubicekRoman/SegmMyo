@@ -19,14 +19,14 @@ import Loaders
 import Network
 
 
-lr         = 0.0001
+lr         = 0.00001
 L2         = 0.000001
 batch      = 16
 step_size  = 5
 sigma      = 0.7
 lambda_Cons = 0.1
 lambda_Other = 1.0
-num_ite    = 50
+num_ite    = 30
 num_epch = 10
 
 
@@ -36,7 +36,8 @@ num_ite = int(np.round(num_ite))
  
 # net = Network.Net(enc_chs=(1,32,64,128,256), dec_chs=(256,128,64,32), out_sz=(128,128), head=(128), retain_dim=False, num_class=2)
 # net = torch.load(r"/data/rj21/MyoSeg/Models/net_v7_0_0.pt")
-net = torch.load(r"/data/rj21/MyoSeg/Models/net_v8_0_3.pt")
+# net = torch.load(r"/data/rj21/MyoSeg/Models/net_v8_0_3.pt")
+net = torch.load(r"/data/rj21/MyoSeg/Models/net_v8_2_2.pt")
 # net = torch.load(r"/data/rj21/MyoSeg/Models/net_v3_0_0.pt")
 
 net = net.cuda()
@@ -204,7 +205,7 @@ for epch in range(0,num_epch):
     # plt.legend()
     # plt.show()
     
-version = "v8_2_3"
+version = "v8_2_5"
 torch.save(net, 'Models/net_' + version + '.pt')
 
 file_name = "Models/Res_net_" + version + ".pkl"

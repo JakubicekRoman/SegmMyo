@@ -1,6 +1,6 @@
 import os
 import numpy as np
-import matplotlib.pyplot as plt
+# import matplotlib.pyplot as plt
 # import SimpleITK as sitk
 import torch
 # from torch.utils import data
@@ -55,7 +55,7 @@ def Predict(path_data, path_save, vNet):
             RescaleIntercept = float(dataset['RescaleIntercept'].value)
                
         img = img*RescaleSlope + RescaleIntercept
-        imgOrig = img.copy()
+        # imgOrig = img.copy()
         
         vel = np.shape(img)
         img, p_cut, p_pad = Util.crop_center_final(img, new_width=128, new_height=128)

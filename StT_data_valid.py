@@ -22,9 +22,9 @@ import Network
 
 
 # ## StT LABELLED - JOINT
-# path_data = '/data/rj21/Data/Data_Joint_StT_Labelled/Resaved_data_StT_cropped'  # Linux bioeng358
-# data_list = Loaders.CreateDataset_StT_J_dcm(os.path.normpath( path_data ))
-# data_list_test = data_list
+path_data = '/data/rj21/Data/Data_Joint_StT_Labelled/Resaved_data_StT_cropped'  # Linux bioeng358
+data_list = Loaders.CreateDataset_StT_J_dcm(os.path.normpath( path_data ))
+data_list_test = data_list
 
 # ## StT LABELLED - P1-30
 # path_data = '/data/rj21/Data/Data_StT_Labaled'  # Linux bioeng358
@@ -34,11 +34,11 @@ import Network
 # # data_list_test = data_list[b+1:]
 
 ## StT LABELLED - Alina data T2
-path_data = '/data/rj21/Data/Data_T2_Alina/dcm_resaved'  # Linux bioeng358
-data_list = Loaders.CreateDataset_StT_P_dcm(os.path.normpath( path_data ),'','')
-data_list_test = data_list
-# b = int(len(data_list)*0.55)
-# data_list_test = data_list[b+1:]
+# path_data = '/data/rj21/Data/Data_T2_Alina/dcm_resaved'  # Linux bioeng358
+# data_list = Loaders.CreateDataset_StT_P_dcm(os.path.normpath( path_data ),'','')
+# data_list_test = data_list
+# # b = int(len(data_list)*0.55)
+# # data_list_test = data_list[b+1:]
 
 # b = int(len(data_list)*0.7)
 # data_list_train = data_list[1:b]
@@ -55,7 +55,7 @@ data_list_test = data_list
 # version = "v3_1_9_5"
 # version = "v3_3_4"
 # version = "v8_0_3"
-version = "v8_2_1"
+version = "v8_2_3"
 
 # net = torch.load(r"/data/rj21/MyoSeg/Models/net_v3_0_0.pt")
 # net = torch.load(r"/data/rj21/MyoSeg/Models/net_v1_5.pt")
@@ -64,7 +64,7 @@ net = net.cuda()
 
 path_save = '/data/rj21/MyoSeg/valid/Main_8_T2A'
 # save_name = 'Joint_valid'
-save_name = 'T2A_valid'
+save_name = 'Joint_valid'
 
 
 # path_save = '/data/rj21/MyoSeg/valid'
@@ -79,7 +79,7 @@ diceTe=[]
 vel=[]
 iii=0
 
-for num in range(0,len(data_list_test),4):
+for num in range(0,len(data_list_test),1):
 # for num in range(0,100,1):    
 
     Imgs = torch.tensor(np.zeros((1,1,128,128) ), dtype=torch.float32)
@@ -150,7 +150,7 @@ for num in range(0,len(data_list_test),4):
     res_table.loc[(num,'ID_image')] =   iii
 
     
-    print(data_list_test[num]['file_name'])
+    print(nPat)
 
     # resB = (res[0,0,:,:].detach().cpu().numpy()>0.5).astype(np.dtype('uint8'))
     # dimg = cv2.dilate(resB, cv2.getStructuringElement(cv2.MORPH_ELLIPSE,(3,3)) )

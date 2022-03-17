@@ -13,7 +13,7 @@ python
 
 import MyoSeg
 
-MyoSeg.Predict(path_data,path_save, Net_version)
+MyoSeg.Predict(path_data, path_save, Net_version)
 
 # Example
-MyoSeg.Predict( '/data/rj21/Data/Test_data/example_data' , '/data/rj21/Data/Test_data/Results', 'net_v8_0_3' )
+MyoSeg.Predict( '/data/rj21/Data/Test_data/example_data' , '/data/rj21/Data/Test_data/Results', 'net_v8_0_3.pt' )
