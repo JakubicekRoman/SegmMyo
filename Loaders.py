@@ -269,54 +269,40 @@ def CreateDataset( ):
     # data_list_2_train, data_list_2_test = CreateDataset_ACDC(os.path.normpath( path_data )
                                                              
     ## StT LABELLED - JOINT
-    path_data = '/data/rj21/Data/Data_Joint_StT_Labelled/Resaved_data_StT_cropped'  # Linux bioeng358
+    # path_data = '/data/rj21/Data/Data_Joint_StT_Labelled/Resaved_data_StT_cropped'  # Linux bioeng358
+    path_data = '/data/rj21/Data/Data_1mm/Joint'  # Linux bioeng358
     data_list = CreateDataset_StT_J_dcm(os.path.normpath( path_data ))
-    # b = int(len(data_list)*0.8)
-    # data_list_1_train = data_list[1:b]
-    # data_list_1_test = data_list[b+1:-1]
-    # data_list_1_train = data_list
-    # data_list_1_test = data_list
     data_list_2 = data_list_2 + data_list
     
-    # ## StT LABELLED - P1-30
-    # path_data = '/data/rj21/Data/Data_StT_Labaled'  # Linux bioeng358
-    # data_list = CreateDataset_StT_P_dcm(os.path.normpath( path_data ))
+    ## StT LABELLED - P1-30
+    path_data = '/data/rj21/Data/Data_StT_Labaled'  # Linux bioeng358
+    data_list = CreateDataset_StT_P_dcm(os.path.normpath( path_data ),'','')
     # b = int(len(data_list)*0.55)
-    # data_list_1_train = data_list[1:b]
-    # data_list_1_test = data_list[b+1:-1]
-    # # data_list_4_test = data_list
-    # # data_list_4_test = data_list[b+1:-1]
-    # # random.shuffle(data_list_4_train)
+    # random.shuffle(data_list_4_train)
+    data_list_2 = data_list_2 + data_list
     
     ## Dataset - MyoPS
-    path_data = '/data/rj21/Data/Data_MyoPS'  # Linux bioeng358
+    # path_data = '/data/rj21/Data/Data_MyoPS'  # Linux bioeng358
+    path_data = '/data/rj21/Data/Data_1mm/MyoPS'  # Linux bioeng358
     data_list = CreateDataset_MyoPS_dcm(os.path.normpath( path_data ))
-    # b = int(len(data_list)*0.75)
-    # data_list_5_train = data_list[0:b]
-    # data_list_5_test = data_list[b+1:-1]
-    # data_list_5_train = data_list
-    # random.shuffle(data_list_4_train)
     data_list_2 = data_list_2+data_list
 
     
     ## Dataset - EMIDEC
-    path_data = '/data/rj21/Data/Data_emidec'  # Linux bioeng358
+    # path_data = '/data/rj21/Data/Data_emidec'  # Linux bioeng358
+    path_data = '/data/rj21/Data/Data_1mm/Emidec'  # Linux bioeng358
     data_list = CreateDataset_MyoPS_dcm(os.path.normpath( path_data ))
-    # b = int(len(data_list)*0.75)
-    # data_list_6_train = data_list[0:b]
-    # data_list_6_test = data_list[b+1:-1]
-    # data_list_6_train = data_list
     data_list_2 = data_list_2+data_list
+    
+    ## Dataset - Alinas data
+    # path_data = '/data/rj21/Data/Data_1mm/T2_alina'  # Linux bioeng358
+    # data_list = CreateDataset_StT_P_dcm(os.path.normpath( path_data ),'','')
+    # data_list_2 = data_list_2+data_list
 
     
     # StT UNLABELLED
     path_data = '/data/rj21/Data/Data_StT_Unlabeled'  # Linux bioeng358
     data_list = CreateDataset_StT_UnL_dcm(os.path.normpath( path_data ))
-    # b = int(len(data_list)*0.7)
-    # data_list_3_test = data_list[b+1:-1]
-    # data_list_3_train = data_list[1:b]
-    # data_list_3_train = data_list
-    # random.shuffle(data_list_3_train)
     data_list_3 = data_list
 
 

@@ -25,6 +25,9 @@ import Utilities as Util
 
 def Predict(path_data, path_save, vNet):
     
+    vel_cut = 128
+    if vNet.find('net_v8_3')>=0:
+        vel_cut = 256
     
     data_list = glob.glob(os.path.normpath( path_data + '/**/*.dcm' ), recursive=True)
     # data_list = data_list[100:101]
@@ -58,7 +61,7 @@ def Predict(path_data, path_save, vNet):
         # imgOrig = img.copy()
         
         vel = np.shape(img)
-        img, p_cut, p_pad = Util.crop_center_final(img, new_width=128, new_height=128)
+        img, p_cut, p_pad = Util.crop_center_final(img, new_width=vel_cut, new_height=vel_cut)
         
         # plt.figure
         # plt.imshow(img,cmap='gray')

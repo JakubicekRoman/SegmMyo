@@ -1,5 +1,11 @@
-list of trained network
+list of trained networks
 
 v8_0_3 - for Joint and Clinical, pixel size 2mm
-v8_2_3 - for T2 Alinma's data, also Joint and Clinical, pixel size 2mm
+v8_2_3 - for T2 Alina's data, also Joint and Clinical, pixel size 2mm
+v8_3_1 - for Joint T1 and T2 with pixel size of 1mm
+
+v8_3_7 - for Joint T1,T2,W1,W4 with pixel size of 1mm
+v8_3_7x - for Joint T1,T2,W1,W4 with pixel size of 1mm - it can be overtrained
+
+v8_3_8 - for Alinas data with pixel size of 1mm
 

@@ -112,9 +112,11 @@ class Training():
 
         net.train(mode=TrainMode)
         batch = len(data_list)
+        vel = params[0]
+        # vel = 256
           
-        Imgs = torch.tensor(np.zeros((batch,1,128,128) ), dtype=torch.float32)
-        Masks = torch.tensor(np.zeros((batch,2,128,128) ), dtype=torch.float32)
+        Imgs = torch.tensor(np.zeros((batch,1,vel,vel) ), dtype=torch.float32)
+        Masks = torch.tensor(np.zeros((batch,2,vel,vel) ), dtype=torch.float32)
         
         for b in range(0,batch):
             current_index = data_list[b]['slice']
@@ -132,18 +134,18 @@ class Training():
                 mask = dataset.pixel_array
                 mask = mask==1  
         
-            # augm_params=[]
-            # augm_params.append({'Output_size': params[0],
-            #                 'Crop_size': random.randint(params[1],params[2]),
-            #                 'Angle': random.randint(params[3],params[4]),
-            #                 'Transl': (random.randint(params[5],params[6]),random.randint(params[7],params[8])),
-            #                 'Scale': random.uniform(1.0,1.0),
-            #                 'Flip': np.random.random()>0.5
-            #                 })
+            augm_params=[]
+            augm_params.append({'Output_size': params[0],
+                            'Crop_size': random.randint(params[1],params[2]),
+                            'Angle': random.randint(params[3],params[4]),
+                            'Transl': (random.randint(params[5],params[6]),random.randint(params[7],params[8])),
+                            'Scale': random.uniform(1.0,1.0),
+                            'Flip': np.random.random()>0.5
+                            })
             
             # if not TrainMode:           
-            img = Util.resize_with_padding(img,(128,128))
-            mask = Util.resize_with_padding(mask,(128,128))    
+            img = Util.resize_with_padding(img,(vel,vel))
+            mask = Util.resize_with_padding(mask,(vel,vel))    
             
             img = np.expand_dims(img, 0).astype(np.float32)
             mask = np.expand_dims(mask, 0).astype(np.float32)    
@@ -155,15 +157,11 @@ class Training():
             
             img = torch.tensor(img)
             mask = torch.tensor(mask)
-        # if TrainMode:  
+            
             # img = Util.augmentation2(img, augm_params)
             # mask = Util.augmentation2(mask, augm_params)
             # mask = mask>0.5    
-            
-            # if TrainMode:  
-            #     if random.uniform(0, 1)>0.5:
-            #         phi = random.uniform(0,2*np.pi)
-            #         img = Util.random_contrast(img, [0.2, 3, phi])   
+
         
             Imgs[b,0,:,:] = img
             Masks[b,0,:,:] = mask
