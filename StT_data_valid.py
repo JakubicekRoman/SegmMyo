@@ -18,28 +18,28 @@ import pydicom as dcm
 
 import Utilities as Util
 import Loaders
-import Network
+import Network_v9 as Network
 
 data_list_test=[]
 
-# # ## StT LABELLED - JOINT
+# ## StT LABELLED - JOINT
 path_data = '/data/rj21/Data/Data_1mm/Joint'  # Linux bioeng358
 data_list = Loaders.CreateDataset_StT_J_dcm(os.path.normpath( path_data ))
 data_list_test = data_list_test + data_list
 
 # # ## StT LABELLED - P1-30
-path_data = '/data/rj21/Data/Data_StT_Labaled'  # Linux bioeng358
-data_list = Loaders.CreateDataset_StT_P_dcm(os.path.normpath( path_data ),'','')
-data_list_test = data_list_test + data_list
-# b = int(len(data_list)*0.55)
-# data_list_test = data_list[b+1:]
+# path_data = '/data/rj21/Data/Data_StT_Labaled'  # Linux bioeng358
+# data_list = Loaders.CreateDataset_StT_P_dcm(os.path.normpath( path_data ),'','')
+# data_list_test = data_list_test + data_list
+# # b = int(len(data_list)*0.55)
+# # data_list_test = data_list[b+1:]
 
 ## StT LABELLED - Alina data T2
-# path_data = '/data/rj21/Data/Data_T2_Alina/dcm_resaved'  # Linux bioeng358
-path_data = '/data/rj21/Data/Data_1mm/T2_alina'
-data_list = Loaders.CreateDataset_StT_P_dcm(os.path.normpath( path_data ),'','')
-# data_list_test = data_list
-data_list_test = data_list_test + data_list
+# # path_data = '/data/rj21/Data/Data_T2_Alina/dcm_resaved'  # Linux bioeng358
+# path_data = '/data/rj21/Data/Data_1mm/T2_alina'
+# data_list = Loaders.CreateDataset_StT_P_dcm(os.path.normpath( path_data ),'','')
+# # data_list_test = data_list
+# data_list_test = data_list_test + data_list
 
 # b = int(len(data_list)*0.55)
 # data_list_test = data_list[b+1:]
@@ -59,7 +59,7 @@ data_list_test = data_list_test + data_list
 # version = "v3_1_9_5"
 # version = "v3_3_4"
 # version = "v8_0_3"
-version = "v8_3_9_1"
+version = "v9_0_0"
 
 # net = torch.load(r"/data/rj21/MyoSeg/Models/net_v3_0_0.pt")
 # net = torch.load(r"/data/rj21/MyoSeg/Models/net_v1_5.pt")
@@ -67,11 +67,11 @@ net = torch.load(r"/data/rj21/MyoSeg/Models/net_" + version + ".pt")
 net = net.cuda()
 
 # path_save = '/data/rj21/MyoSeg/valid/Main_8_1mm'
-path_save = '/data/rj21/MyoSeg/valid/Main_8_1mm'
+path_save = '/data/rj21/MyoSeg/valid/Main_v9'
 
 # save_name = 'Joint_valid'
 # save_name = 'All_valid'
-save_name = 'All_valid'
+save_name = 'joint_valid'
 
 
 # path_save = '/data/rj21/MyoSeg/valid'
@@ -118,7 +118,7 @@ for num in range(0,len(data_list_test),1):
     img = torch.tensor(np.expand_dims(img, 0).astype(np.float32))
     mask = torch.tensor(np.expand_dims(mask, 0).astype(np.float32))
        
-    params = (256,  250,256,  0,0,  0,0,0,0)
+    params = (256,  255,256,  0,0,  0,0,0,0)
     augm_params=[]
     augm_params.append({'Output_size': params[0],
                         'Crop_size': random.randint(params[1],params[2]),
