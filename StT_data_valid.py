@@ -26,7 +26,7 @@ data_list_test=[]
 path_data = '/data/rj21/Data/Data_1mm/Joint'  # Linux bioeng358
 data_list = Loaders.CreateDataset_StT_J_dcm(os.path.normpath( path_data ))
 # data_list_test = data_list_test + data_list
-data_list_test = data_list_test + data_list[1000:-1]
+data_list_test = data_list_test + data_list[1028:1154]
 
 # # ## StT LABELLED - P1-30
 # path_data = '/data/rj21/Data/Data_StT_Labaled'  # Linux bioeng358
@@ -196,8 +196,8 @@ for num in range(0,len(data_list_test),1):
     plt.show()
     plt.draw()
     
-    # Fig.savefig( path_save + '/' + 'res_' + "%.4f" % (dice.item()) + '_' +  nPat + file_name.split('_')[0] + '_' + seq + '_' + current_index + '.png', dpi=150)
-    # plt.close(Fig)
+    Fig.savefig( path_save + '/' + 'res_' + "%.4f" % (dice.item()) + '_' +  nPat + file_name.split('_')[0] + '_' + seq + '_' + current_index + '.png', dpi=150)
+    plt.close(Fig)
     
 
     
