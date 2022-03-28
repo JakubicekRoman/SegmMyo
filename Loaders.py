@@ -123,8 +123,8 @@ def CreateDataset_StT_J_dcm(path_data):
         f = os.listdir(os.path.join(path_data, pat_name))
         for _,file in enumerate(f):
             if file.find('_gt')>0:
-                # if file.find('Joint')>=0 and file.find('_W')<0:
-                if file.find('Joint')>=0:
+                if file.find('Joint')>=0 and file.find('_W4')>=0:
+                # if file.find('Joint')>=0:
                     path_mask = os.path.join(path_data, pat_name, file)
                     name = file[0:file.find('_gt')] + file[file.find('_gt')+3:]
                     # path_maps = os.path.join(path_data, pat_name, name+'.nii.gz')

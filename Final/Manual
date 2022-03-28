@@ -15,5 +15,11 @@ import MyoSeg
 
 MyoSeg.Predict(path_data, path_save, Net_version)
 
+%% Four version with input of four imags (T1,T2,W1,W4)
+MyoSeg.PredictFour(path_data, path_save, Net_version)
+
 # Example
 MyoSeg.Predict( '/data/rj21/Data/Test_data/example_data' , '/data/rj21/Data/Test_data/Results', 'net_v8_0_3.pt' )
+
+
+

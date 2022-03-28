@@ -64,9 +64,11 @@ def augmentation2(img, params):
         img = torch.flip(img, [len(img.size())-1])
     
     augm_img = T.functional.affine(img, angle, translate, scale, shear,  T.InterpolationMode('bilinear'))
-    augm_img = T.CenterCrop(size=CenterCrop)(augm_img)
-    resize = T.Resize((vel,vel), T.InterpolationMode('nearest'))
-    augm_img = resize(augm_img)
+    augm_img = T.CenterCrop(size=CenterCrop)
+    # resize = T.Resize((vel,vel), T.InterpolationMode('nearest'))
+    # augm_img = resize(augm_img)
+    augm_img = resize_with_padding(augm_img,(vel,vel))
+    
     # augm_img = (augm_img - torch.min(augm_img))/ (torch.max(augm_img)-torch.min(augm_img))
     # augm_img = T.functional.adjust_sharpness(augm_img, 2)
 

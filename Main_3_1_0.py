@@ -16,19 +16,20 @@ from scipy.stats import norm
 
 import Utilities as Util
 import Loaders
-import Network_v9 as Network
+import Network as Network
+# import Network_v9 as Network
 
 
 lr         = 0.001
 L2         = 0.000001
-batch      = 8
-step_size  = 40
+batch      = 16
+step_size  = 10
 sigma      = 0.7
 lambda_Cons = 0.01
 lambda_Other = 0.5
 lambda_Train = 1.0
-num_ite    = 100
-num_epch   = 100
+num_ite    = 50
+num_epch   = 50
 
 
 batchTr = int(np.round(batch))
@@ -37,13 +38,13 @@ num_ite = int(np.round(num_ite))
  
 torch.cuda.empty_cache()   
  
-net = Network.Net(enc_chs=(4,32,64,128,256), dec_chs=(256,128,64,32), out_sz=(128,128), head=(128), retain_dim=False, num_class=2)
+# net = Network.Net(enc_chs=(4,32,64,128,256), dec_chs=(256,128,64,32), out_sz=(128,128), head=(128), retain_dim=False, num_class=2)
 # net = Network.AttU_Net(img_ch=1,output_ch=1)
 # net = torch.load(r"/data/rj21/MyoSeg/Models/net_v9_0_0.pt")
 # net = torch.load(r"/data/rj21/MyoSeg/Models/net_v7_0_0.pt")
 # net = torch.load(r"/data/rj21/MyoSeg/Models/net_v8_2_3.pt")
 # net = torch.load(r"/data/rj21/MyoSeg/Models/net_v8_2_0.pt")
-# net = torch.load(r"/data/rj21/MyoSeg/Models/net_v8_3_1.pt")
+net = torch.load(r"/data/rj21/MyoSeg/Models/net_v8_4_0.pt")
 
 # Network.init_weights(net,init_type= 'xavier', gain=0.02)
 
@@ -59,8 +60,8 @@ data_list_2_train, data_list_3_train = Loaders.CreateDataset()
 data_list_1_train=[];data_list_1_test=[];
 
 ## ACDC
-path_data = '/data/rj21/Data/Data_ACDC/training'  # Linux bioeng358
-data_list_1_train, data_list_1_test = Loaders.CreateDataset_ACDC(os.path.normpath( path_data ))
+# path_data = '/data/rj21/Data/Data_ACDC/training'  # Linux bioeng358
+# data_list_1_train, data_list_1_test = Loaders.CreateDataset_ACDC(os.path.normpath( path_data ))
   
 # # ## StT LABELLED - P1-30
 # path_data = '/data/rj21/Data/Data_1mm/Clin'  # Linux bioeng358
@@ -71,14 +72,14 @@ data_list_1_train, data_list_1_test = Loaders.CreateDataset_ACDC(os.path.normpat
 # # data_list_2_train = data_list_2_train + data_list
 
 # ## StT LABELLED - JOINT
-# # path_data = '/data/rj21/Data/Data_Joint_StT_Labelled/Resaved_data_StT_cropped'  # Linux bioeng358
-# path_data = '/data/rj21/Data/Data_1mm/Joint'  # Linux bioeng358
-# data_list = Loaders.CreateDataset_StT_J_dcm(os.path.normpath( path_data ))
-# b = int(len(data_list)*0.75)
-# # data_list_1_train = data_list[1:b]
-# # data_list_1_test = data_list[b+1:-1]
-# data_list_1_train = data_list_1_train + data_list[1:b]
-# data_list_1_test = data_list_1_test + data_list[b+1:-1]
+# path_data = '/data/rj21/Data/Data_Joint_StT_Labelled/Resaved_data_StT_cropped'  # Linux bioeng358
+path_data = '/data/rj21/Data/Data_1mm/Joint'  # Linux bioeng358
+data_list = Loaders.CreateDataset_StT_J_dcm(os.path.normpath( path_data ))
+b = int(len(data_list)*0.80)
+# data_list_1_train = data_list[1:b]
+# data_list_1_test = data_list[b+1:-1]
+data_list_1_train = data_list_1_train + data_list[1:b]
+data_list_1_test = data_list_1_test + data_list[b+1:-1]
     
 
 # # ## Alinas data
@@ -121,7 +122,7 @@ for epch in range(0,num_epch):
         Indx_Orig = D1[Indx_Sort,0].astype('int')
         sub_set = list(map(data_list_1_train.__getitem__, Indx_Orig))
         
-        params = (256,  206,286 ,  -170,170,  -40,40,-40,40)
+        params = (256,  226,286 ,  -170,170,  -40,40,-40,40)
         # params = (128,  108,148, -170,170,  -10,10,-10,10)
 
         loss_train, res, Imgs, Masks = Network.Training.straightForward(sub_set, net, params, TrainMode=True, Contrast=False)
@@ -130,26 +131,21 @@ for epch in range(0,num_epch):
         diceTr1.append( np.mean( dice.detach().cpu().numpy() ) )
         # Inds1.append(Indx)
         D1[np.array(Indx_Sort),1] = np.array(dice.detach().cpu().numpy())
-        # D1 = D1[D1[:, 0].argsort()]
         
-        ## Pro Other dataset
-        Indx_Sort = Util.rand_norm_distrb(batchTr, mu2, sigma2, [0,len(data_list_2_train)]).astype('int')
-        Indx_Orig = D2[Indx_Sort,0].astype('int')
-        sub_set = list(map(data_list_2_train.__getitem__, Indx_Orig))  
+        # ## Pro Other dataset
+        # Indx_Sort = Util.rand_norm_distrb(batchTr, mu2, sigma2, [0,len(data_list_2_train)]).astype('int')
+        # Indx_Orig = D2[Indx_Sort,0].astype('int')
+        # sub_set = list(map(data_list_2_train.__getitem__, Indx_Orig))  
         
-        loss_Other, res2, _, Masks2 = Network.Training.straightForward(sub_set, net, params, TrainMode=True, Contrast=False)
+        # loss_Other, res2, _, Masks2 = Network.Training.straightForward(sub_set, net, params, TrainMode=True, Contrast=False)
                                                        
-        dice = Util.dice_coef_batch( res2[:,0,:,:]>0.5, Masks2[:,0,:,:].cuda() )                
-        diceTr2.append(dice.detach().cpu().numpy())
-        D2[np.array(Indx_Sort),1] = np.array(dice.detach().cpu().numpy())
+        # dice = Util.dice_coef_batch( res2[:,0,:,:]>0.5, Masks2[:,0,:,:].cuda() )                
+        # diceTr2.append(dice.detach().cpu().numpy())
+        # D2[np.array(Indx_Sort),1] = np.array(dice.detach().cpu().numpy())
    
         D1 = D1[D1[:, 1].argsort()]
-        D2 = D2[D2[:, 1].argsort()]
-        
-        # for iii in range(0,batchTr):
-        #     mi.append( Util.mutual_information_2d(res.detach().cpu().numpy()[iii,0,:,:]>0.5, Masks.numpy()[iii,0,:,:]) )
-        # MI.append(np.mean(mi))
-        # mi=[]
+        # D2 = D2[D2[:, 1].argsort()]
+
         HD2=[]
         # for b in range(0,batchTr):
         #     A = res[b,0,:,:].detach().cpu().numpy()>0.5
@@ -168,9 +164,9 @@ for epch in range(0,num_epch):
     ## backF - training
         net.train(mode=True)
         if epch>0:
-            # loss = lambda_Train*loss_train
+            loss = lambda_Train*loss_train
             # loss = lambda_Train*loss_train + np.mean(HD2) + lambda_Other*loss_Other + lambda_Cons*loss_cons 
-            loss = lambda_Train*loss_train + lambda_Other*loss_Other
+            # loss = lambda_Train*loss_train + lambda_Other*loss_Other
             optimizer.zero_grad()
             loss.backward()
             # torch.nn.utils.clip_grad_value_(net.parameters(), clip_value=1.0)
@@ -264,7 +260,7 @@ for epch in range(0,num_epch):
     # plt.legend()
     # plt.show()
     
-version = "v9_1_0"
+version = "v8_4_1"
 torch.save(net, 'Models/net_' + version + '.pt')
 
 file_name = "Models/Res_net_" + version + ".pkl"
