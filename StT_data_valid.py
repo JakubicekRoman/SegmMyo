@@ -25,7 +25,8 @@ data_list_test=[]
 # ## StT LABELLED - JOINT
 path_data = '/data/rj21/Data/Data_1mm/Joint'  # Linux bioeng358
 data_list = Loaders.CreateDataset_StT_J_dcm(os.path.normpath( path_data ))
-data_list_test = data_list_test + data_list
+# data_list_test = data_list_test + data_list
+data_list_test = data_list_test + data_list[1000:-1]
 
 # # ## StT LABELLED - P1-30
 # path_data = '/data/rj21/Data/Data_StT_Labaled'  # Linux bioeng358
@@ -59,7 +60,7 @@ data_list_test = data_list_test + data_list
 # version = "v3_1_9_5"
 # version = "v3_3_4"
 # version = "v8_0_3"
-version = "v9_0_0"
+version = "v9_1_1"
 
 # net = torch.load(r"/data/rj21/MyoSeg/Models/net_v3_0_0.pt")
 # net = torch.load(r"/data/rj21/MyoSeg/Models/net_v1_5.pt")
@@ -137,7 +138,8 @@ for num in range(0,len(data_list_test),1):
     
     with torch.no_grad(): 
         res = net( Imgs.cuda() )
-        res = torch.softmax(res,dim=1)                    
+        # res = torch.softmax(res,dim=1)
+        res = torch.sigmoid(res)      # for V9_                
     
     torch.cuda.empty_cache()
         
@@ -162,37 +164,37 @@ for num in range(0,len(data_list_test),1):
     
     print(nPat)
 
-    # resB = (res[0,0,:,:].detach().cpu().numpy()>0.5).astype(np.dtype('uint8'))
-    # dimg = cv2.dilate(resB, cv2.getStructuringElement(cv2.MORPH_ELLIPSE,(3,3)) )
-    # ctr = dimg - resB
+    resB = (res[0,0,:,:].detach().cpu().numpy()>0.5).astype(np.dtype('uint8'))
+    dimg = cv2.dilate(resB, cv2.getStructuringElement(cv2.MORPH_ELLIPSE,(3,3)) )
+    ctr = dimg - resB
     
-    # GT = (Masks[0,0,:,:].detach().cpu().numpy()>0.5).astype(np.dtype('uint8'))
-    # dimg = cv2.dilate(GT, cv2.getStructuringElement(cv2.MORPH_ELLIPSE,(3,3)) )
-    # ctrGT = dimg - GT
+    GT = (Masks[0,0,:,:].detach().cpu().numpy()>0.5).astype(np.dtype('uint8'))
+    dimg = cv2.dilate(GT, cv2.getStructuringElement(cv2.MORPH_ELLIPSE,(3,3)) )
+    ctrGT = dimg - GT
     
-    # imgB = Imgs[0,0,:,:].detach().numpy()
-    # imgB = ( imgB - imgB.min() ) / (imgB.max() - imgB.min())
-    # RGB_imgB = cv2.cvtColor(imgB,cv2.COLOR_GRAY2RGB)
+    imgB = Imgs[0,0,:,:].detach().numpy()
+    imgB = ( imgB - imgB.min() ) / (imgB.max() - imgB.min())
+    RGB_imgB = cv2.cvtColor(imgB,cv2.COLOR_GRAY2RGB)
     
-    # comp = RGB_imgB[:,:,0]
-    # comp[ctr==1]=1
-    # comp[ctrGT==1]=0
-    # RGB_imgB[:,:,0] = comp
+    comp = RGB_imgB[:,:,0]
+    comp[ctr==1]=1
+    comp[ctrGT==1]=0
+    RGB_imgB[:,:,0] = comp
     
-    # comp = RGB_imgB[:,:,1]
-    # comp[ctr==1]=0
-    # comp[ctrGT==1]=1
-    # RGB_imgB[:,:,1] = comp
+    comp = RGB_imgB[:,:,1]
+    comp[ctr==1]=0
+    comp[ctrGT==1]=1
+    RGB_imgB[:,:,1] = comp
     
-    # comp = RGB_imgB[:,:,2]
-    # comp[ctr==1]=0
-    # comp[ctrGT==1]=0
-    # RGB_imgB[:,:,2] = comp
+    comp = RGB_imgB[:,:,2]
+    comp[ctr==1]=0
+    comp[ctrGT==1]=0
+    RGB_imgB[:,:,2] = comp
     
-    # Fig = plt.figure()
-    # plt.imshow(RGB_imgB)
-    # # plt.show()
-    # # plt.draw()
+    Fig = plt.figure()
+    plt.imshow(RGB_imgB)
+    plt.show()
+    plt.draw()
     
     # Fig.savefig( path_save + '/' + 'res_' + "%.4f" % (dice.item()) + '_' +  nPat + file_name.split('_')[0] + '_' + seq + '_' + current_index + '.png', dpi=150)
     # plt.close(Fig)

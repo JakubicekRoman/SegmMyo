@@ -107,7 +107,8 @@ class Net(nn.Module):
             out = F.interpolate(out, self.out_sz)
         return out
     
-class Training(): 
+class Training():     
+    
     def straightForward(data_list, net, params, TrainMode=True, Contrast=False): 
 
         net.train(mode=TrainMode)

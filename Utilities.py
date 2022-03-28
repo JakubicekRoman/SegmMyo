@@ -63,11 +63,13 @@ def augmentation2(img, params):
     if flip:
         img = torch.flip(img, [len(img.size())-1])
     
+    img = T.CenterCrop(size=CenterCrop)(img)
     augm_img = T.functional.affine(img, angle, translate, scale, shear,  T.InterpolationMode('bilinear'))
-    augm_img = T.CenterCrop(size=CenterCrop)
-    # resize = T.Resize((vel,vel), T.InterpolationMode('nearest'))
+    # augm_img = T.CenterCrop(size=CenterCrop)(augm_img)
+    # resize = T.Resize((augm_img*scale,augm_img*scale), T.InterpolationMode('nearest'))
     # augm_img = resize(augm_img)
-    augm_img = resize_with_padding(augm_img,(vel,vel))
+    # augm_img = resize_with_padding_Tensor(augm_img,(vel,vel))
+    augm_img = T.CenterCrop(size=vel)(augm_img)
     
     # augm_img = (augm_img - torch.min(augm_img))/ (torch.max(augm_img)-torch.min(augm_img))
     # augm_img = T.functional.adjust_sharpness(augm_img, 2)
@@ -211,6 +213,7 @@ def resize_with_padding(img, expected_size):
     img = np.pad(img, [(padding[0], padding[2]), (padding[1], padding[3])], mode='constant')
     img = crop_center(img, new_width=expected_size[0], new_height=expected_size[1])
     return img
+
 
 
 def dice_loss(X, Y):

@@ -10,7 +10,10 @@ import cv2
 import SimpleITK as sitk
 from scipy.stats import norm
 import sys
+    
+from scipy import ndimage
 
+EPS = np.finfo(float).eps
     
 import matplotlib.pyplot as plt
 
@@ -60,10 +63,14 @@ def augmentation2(img, params):
     if flip:
         img = torch.flip(img, [len(img.size())-1])
     
+    img = T.CenterCrop(size=CenterCrop)(img)
     augm_img = T.functional.affine(img, angle, translate, scale, shear,  T.InterpolationMode('bilinear'))
-    augm_img = T.CenterCrop(size=CenterCrop)(augm_img)
-    resize = T.Resize((vel,vel), T.InterpolationMode('bilinear'))
-    augm_img = resize(augm_img)
+    # augm_img = T.CenterCrop(size=CenterCrop)(augm_img)
+    # resize = T.Resize((augm_img*scale,augm_img*scale), T.InterpolationMode('nearest'))
+    # augm_img = resize(augm_img)
+    # augm_img = resize_with_padding_Tensor(augm_img,(vel,vel))
+    augm_img = T.CenterCrop(size=vel)(augm_img)
+    
     # augm_img = (augm_img - torch.min(augm_img))/ (torch.max(augm_img)-torch.min(augm_img))
     # augm_img = T.functional.adjust_sharpness(augm_img, 2)
 
@@ -208,6 +215,7 @@ def resize_with_padding(img, expected_size):
     return img
 
 
+
 def dice_loss(X, Y):
     eps = 0.00001
     dice = ((2. * torch.sum(X*Y) + eps) / (torch.sum(X) + torch.sum(Y) + eps) )
@@ -271,4 +279,52 @@ def progress(count, total, status=''):
     sys.stdout.write('[%s] %s%s ...%s\r' % (bar, percents, '%', status))
     sys.stdout.flush() 
     
-    
+
+
+def mutual_information_2d(x, y, sigma=1, normalized=False):
+   """
+   Computes (normalized) mutual information between two 1D variate from a
+   joint histogram.
+   Parameters
+   ----------
+   x : 1D array
+       first variable
+   y : 1D array
+       second variable
+   sigma: float
+       sigma for Gaussian smoothing of the joint histogram
+   Returns
+   -------
+   nmi: float
+       the computed similariy measure
+   """
+   bins = (256, 256)
+
+   x = x.ravel()
+   y = y.ravel()
+  
+   jh = np.histogram2d(x, y, bins=bins)[0]
+
+   # smooth the jh with a gaussian filter of given sigma
+   ndimage.gaussian_filter(jh, sigma=sigma, mode='constant',
+                                output=jh)
+
+   # compute marginal histograms
+   jh = jh + EPS
+   sh = np.sum(jh)
+   jh = jh / sh
+   s1 = np.sum(jh, axis=0).reshape((-1, jh.shape[0]))
+   s2 = np.sum(jh, axis=1).reshape((jh.shape[1], -1))
+
+   # Normalised Mutual Information of:
+   # Studholme,  jhill & jhawkes (1998).
+   # "A normalized entropy measure of 3-D medical image alignment".
+   # in Proc. Medical Imaging 1998, vol. 3338, San Diego, CA, pp. 132-143.
+   if normalized:
+       mi = ((np.sum(s1 * np.log(s1)) + np.sum(s2 * np.log(s2)))
+               / np.sum(jh * np.log(jh))) - 1
+   else:
+       mi = ( np.sum(jh * np.log(jh)) - np.sum(s1 * np.log(s1))
+              - np.sum(s2 * np.log(s2)))
+
+   return mi

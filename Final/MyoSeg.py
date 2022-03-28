@@ -22,14 +22,20 @@ import Utilities as Util
 ## -------------- validation for \StT data annotated ------------------
 # path_data = '/data/rj21/Data/Test_data/example_data_joint'  # Linux bioeng358
 # path_save = '/data/rj21/MyoSeg/Final/Results'
-# vNet = '/data/rj21/MyoSeg/Models/net_v8_4_1.pt'
+# vNet = '/data/rj21/MyoSeg/Models/net_v9_1_1.pt'
 
 
 def Predict(path_data, path_save, vNet):
-    
+            
     vel_cut = 128
     if vNet.find('net_v8_3')>=0:
         vel_cut = 256
+        
+    if vNet.find('net_v9_')>=0:
+        vel_cut = 256
+        import Network_v9 as Network
+    else:
+        import Network as Network
     
     data_list = glob.glob(os.path.normpath( path_data + '/**/*.dcm' ), recursive=True)
     # data_list = data_list[100:101]
@@ -57,7 +63,7 @@ def Predict(path_data, path_save, vNet):
             RescaleIntercept = float(dataset['RescaleIntercept'].value)
                
         img = img*RescaleSlope + RescaleIntercept
-        # imgOrig = img.copy()
+        imgOrig = img.copy()
         
         vel = np.shape(img)
         img, p_cut, p_pad = Util.crop_center_final(img, new_width=vel_cut, new_height=vel_cut)
@@ -66,7 +72,11 @@ def Predict(path_data, path_save, vNet):
         
         with torch.no_grad(): 
             res = net( img.cuda() )
-            res = torch.softmax(res,dim=1)
+            if vNet.find('net_v9_')>=0:
+                res = torch.sigmoid(res)
+            else:
+                res = torch.softmax(res,dim=1)
+           
         
         res = res[0,0,:,:].detach().cpu().numpy()>0.5
         
@@ -113,8 +123,8 @@ def Predict(path_data, path_save, vNet):
             filled_len_old = filled_len
      
     print( '1.00% ... done' )
-    
-    
+        
+        
 def PredictFour(path_data, path_save, vNet):
     
     vel_cut = 256

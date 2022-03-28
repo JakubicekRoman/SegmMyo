@@ -123,7 +123,7 @@ def CreateDataset_StT_J_dcm(path_data):
         f = os.listdir(os.path.join(path_data, pat_name))
         for _,file in enumerate(f):
             if file.find('_gt')>0:
-                # if file.find('Joint')>=0 and file.find('_W')<0:
+                # if file.find('Joint')>=0 and file.find('_T')>=0:
                 if file.find('Joint')>=0:
                     path_mask = os.path.join(path_data, pat_name, file)
                     name = file[0:file.find('_gt')] + file[file.find('_gt')+3:]
@@ -275,11 +275,11 @@ def CreateDataset( ):
     # data_list_2 = data_list_2 + data_list
     
     ## StT LABELLED - P1-30
-    path_data = '/data/rj21/Data/Data_StT_Labaled'  # Linux bioeng358
-    data_list = CreateDataset_StT_P_dcm(os.path.normpath( path_data ),'','')
-    # b = int(len(data_list)*0.55)
-    # random.shuffle(data_list_4_train)
-    data_list_2 = data_list_2 + data_list
+    # path_data = '/data/rj21/Data/Data_StT_Labaled'  # Linux bioeng358
+    # data_list = CreateDataset_StT_P_dcm(os.path.normpath( path_data ),'','')
+    # # b = int(len(data_list)*0.55)
+    # # random.shuffle(data_list_4_train)
+    # data_list_2 = data_list_2 + data_list
     
     ## Dataset - MyoPS
     # path_data = '/data/rj21/Data/Data_MyoPS'  # Linux bioeng358
@@ -292,6 +292,11 @@ def CreateDataset( ):
     # path_data = '/data/rj21/Data/Data_emidec'  # Linux bioeng358
     path_data = '/data/rj21/Data/Data_1mm/Emidec'  # Linux bioeng358
     data_list = CreateDataset_MyoPS_dcm(os.path.normpath( path_data ))
+    data_list_2 = data_list_2+data_list
+    
+    ## Dataset - Alinas data
+    path_data = '/data/rj21/Data/Data_1mm/T2_alina'  # Linux bioeng358
+    data_list = CreateDataset_StT_P_dcm(os.path.normpath( path_data ),'','')
     data_list_2 = data_list_2+data_list
 
     

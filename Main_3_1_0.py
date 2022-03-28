@@ -16,20 +16,20 @@ from scipy.stats import norm
 
 import Utilities as Util
 import Loaders
-import Network as Network
-# import Network_v9 as Network
+# import Network as Network
+import Network_v9 as Network
 
 
 lr         = 0.001
 L2         = 0.000001
 batch      = 16
-step_size  = 10
+step_size  = 30
 sigma      = 0.7
 lambda_Cons = 0.01
 lambda_Other = 0.5
 lambda_Train = 1.0
 num_ite    = 50
-num_epch   = 50
+num_epch   = 70
 
 
 batchTr = int(np.round(batch))
@@ -40,11 +40,11 @@ torch.cuda.empty_cache()
  
 # net = Network.Net(enc_chs=(4,32,64,128,256), dec_chs=(256,128,64,32), out_sz=(128,128), head=(128), retain_dim=False, num_class=2)
 # net = Network.AttU_Net(img_ch=1,output_ch=1)
-# net = torch.load(r"/data/rj21/MyoSeg/Models/net_v9_0_0.pt")
+net = torch.load(r"/data/rj21/MyoSeg/Models/net_v9_0_1.pt")
 # net = torch.load(r"/data/rj21/MyoSeg/Models/net_v7_0_0.pt")
 # net = torch.load(r"/data/rj21/MyoSeg/Models/net_v8_2_3.pt")
 # net = torch.load(r"/data/rj21/MyoSeg/Models/net_v8_2_0.pt")
-net = torch.load(r"/data/rj21/MyoSeg/Models/net_v8_4_0.pt")
+# net = torch.load(r"/data/rj21/MyoSeg/Models/net_v8_4_0.pt")
 
 # Network.init_weights(net,init_type= 'xavier', gain=0.02)
 
@@ -122,7 +122,7 @@ for epch in range(0,num_epch):
         Indx_Orig = D1[Indx_Sort,0].astype('int')
         sub_set = list(map(data_list_1_train.__getitem__, Indx_Orig))
         
-        params = (256,  226,286 ,  -170,170,  -40,40,-40,40)
+        params = (256,  168,258 ,  -170,170,  -40,40,-40,40 ,  0.8,1.2 )
         # params = (128,  108,148, -170,170,  -10,10,-10,10)
 
         loss_train, res, Imgs, Masks = Network.Training.straightForward(sub_set, net, params, TrainMode=True, Contrast=False)
@@ -194,7 +194,7 @@ for epch in range(0,num_epch):
     net.train(mode=False)
    
     ### validation
-    params = (256,  256,256,  -0,0,  -0,0,-0,0)
+    params = (256,  256,256,  -0,0,  -0,0,-0,0,    1.0,1.0)
     # params = (128,  108,148, -170,170,  -10,10,-10,10)
     batchTe = 64
     random.shuffle(data_list_1_test)
@@ -227,8 +227,8 @@ for epch in range(0,num_epch):
 # for i in range(0,200):
     
     plt.figure
-    plt.imshow(ImgsTe[0,0,:,:].detach().numpy(), cmap='gray')
-    plt.imshow(resTe[0,0,:,:].detach().cpu().numpy(), cmap='jet', alpha=0.2)
+    plt.imshow(Imgs[0,0,:,:].detach().numpy(), cmap='gray')
+    plt.imshow(res[0,0,:,:].detach().cpu().numpy(), cmap='jet', alpha=0.2)
     plt.show()
     # plt.figure
     # plt.imshow(ImgsTe[0,0,:,:].detach().numpy(), cmap='gray')
@@ -252,7 +252,6 @@ for epch in range(0,num_epch):
     plt.ylim([0.0, 0.9])
     plt.legend()
     plt.show()    
-
     
     # plt.figure()
     # plt.plot(HD_Te_Clin,label='HD Clinical Test') 
@@ -260,7 +259,7 @@ for epch in range(0,num_epch):
     # plt.legend()
     # plt.show()
     
-version = "v8_4_1"
+version = "v9_1_1"
 torch.save(net, 'Models/net_' + version + '.pt')
 
 file_name = "Models/Res_net_" + version + ".pkl"
