@@ -123,7 +123,7 @@ def CreateDataset_StT_J_dcm(path_data):
         f = os.listdir(os.path.join(path_data, pat_name))
         for _,file in enumerate(f):
             if file.find('_gt')>0:
-                # if file.find('Joint')>=0 and file.find('_T')>=0:
+                # if file.find('Joint')>=0 and file.find('_W4')>=0:
                 if file.find('Joint')>=0:
                     path_mask = os.path.join(path_data, pat_name, file)
                     name = file[0:file.find('_gt')] + file[file.find('_gt')+3:]
@@ -194,19 +194,22 @@ def CreateDataset_StT_P_dcm(path_data, text1, text2):
     return data_list_tr
 
 
-def CreateDataset_StT_UnL_dcm(path_data):
+def CreateDataset_StT_UnL_dcm(path_data, text1, text2):
     data_list_tr = []
     p = os.listdir(path_data)
     p = sorted(p)
+    iii=0
     for ii in range(0,len(p)):
         pat_name = p[ii]
-        if pat_name.find('P')>=0 and not(  int(pat_name[1:-1])<=30 and int(pat_name[1:-1])>=150 ):
+        # if pat_name.find('P')>=0 and not(  int(pat_name[1:-1])<=30 and int(pat_name[1:-1])>=150 ):
+        if pat_name.find(text1)>=0:
             pthX = os.path.join(path_data, pat_name)
             if os.path.isdir(pthX):
                 f = os.listdir(pthX)
                 for _,sf in enumerate(f):
                     pth = os.path.join(path_data, pat_name, sf)
-                    if os.path.isdir(pth):
+                    if sf.find(text2)>=0:
+                        if os.path.isdir(pth):
                             ff = os.listdir(pth)  
                             for sl,file in enumerate(ff):
                                 if file.find('.dcm')>=0:
@@ -215,12 +218,12 @@ def CreateDataset_StT_UnL_dcm(path_data):
                                                           'mask_path': pth2,
                                                           'pat_name': pat_name,
                                                           'file_name': sf,
-                                                          'slice': sl
-                                                          # 'ID_pat': ii,
-                                                          # 'ID_scan': iii
-                                                          } )
-                                    # iii+=1
-            
+                                                          'slice': sl,
+                                                          'Seq': sf[0:2],
+                                                          'ID_pat': ii,
+                                                          'ID_scan': iii
+                                                         } )
+                            iii=iii+1 
     return data_list_tr
 
 
@@ -275,11 +278,11 @@ def CreateDataset( ):
     # data_list_2 = data_list_2 + data_list
     
     ## StT LABELLED - P1-30
-    # path_data = '/data/rj21/Data/Data_StT_Labaled'  # Linux bioeng358
-    # data_list = CreateDataset_StT_P_dcm(os.path.normpath( path_data ),'','')
-    # # b = int(len(data_list)*0.55)
-    # # random.shuffle(data_list_4_train)
-    # data_list_2 = data_list_2 + data_list
+    path_data = '/data/rj21/Data/Data_StT_Labaled'  # Linux bioeng358
+    data_list = CreateDataset_StT_P_dcm(os.path.normpath( path_data ),'','')
+    # b = int(len(data_list)*0.55)
+    # random.shuffle(data_list_4_train)
+    data_list_2 = data_list_2 + data_list
     
     ## Dataset - MyoPS
     # path_data = '/data/rj21/Data/Data_MyoPS'  # Linux bioeng358
@@ -302,7 +305,7 @@ def CreateDataset( ):
     
     # StT UNLABELLED
     path_data = '/data/rj21/Data/Data_StT_Unlabeled'  # Linux bioeng358
-    data_list = CreateDataset_StT_UnL_dcm(os.path.normpath( path_data ))
+    data_list = CreateDataset_StT_UnL_dcm(os.path.normpath( path_data ),'','')
     data_list_3 = data_list
 
 

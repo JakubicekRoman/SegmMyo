@@ -1,16 +1,20 @@
 list of trained networks
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-v8_0_3 - for Joint and Clinical, pixel size 2mm
+v8_0_3 - forJoint and Clinical, pixel size 2mm
 v8_2_3 - for T2 Alina's data, also Joint and Clinical, pixel size 2mm
 v8_3_1 - for Joint T1 and T2 with pixel size of 1mm
 
 v8_3_7 - for Joint T1,T2,W1,W4 with pixel size of 1mm
 v8_3_7x - for Joint T1,T2,W1,W4 with pixel size of 1mm - it can be overtrained
-
 v8_3_8 - for Alinas data with pixel size of 1mm
 
 %% For input of four images T1,T2,W1,W4
 v8_4_1 - fot Joint where input is set of four 1mm images. !!!You must call MyoSeg.PredictFour()!!!
+v9_2_1 - Attention network fot Joint where input is set of four 1mm images. !!!You must call MyoSeg.PredictFour()!!!
 
-%% Attention network
-v9_1_1 - Attention network for JointT1T2W1W4 (call "MyoSeg.Predict")
+%% Attention networks
+v9_1_1 - Attention network for Joint (call "MyoSeg.Predict")
+v9_1_2 - Attention network for Joint more Consistent (call "MyoSeg.Predict")
+v9_1_6_6 - Attention network for Clinical data (call "MyoSeg.Predict")
+v9_1_6_7 - Attention network for T2 Alina's data (call "MyoSeg.Predict")

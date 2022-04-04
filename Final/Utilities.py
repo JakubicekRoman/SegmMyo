@@ -66,7 +66,7 @@ def augmentation2(img, params):
     img = T.CenterCrop(size=CenterCrop)(img)
     augm_img = T.functional.affine(img, angle, translate, scale, shear,  T.InterpolationMode('bilinear'))
     # augm_img = T.CenterCrop(size=CenterCrop)(augm_img)
-    # resize = T.Resize((augm_img*scale,augm_img*scale), T.InterpolationMode('nearest'))
+    # resize = T.Resize((*scale,*scale), T.InterpolationMode('nearest'))
     # augm_img = resize(augm_img)
     # augm_img = resize_with_padding_Tensor(augm_img,(vel,vel))
     augm_img = T.CenterCrop(size=vel)(augm_img)
@@ -201,7 +201,14 @@ def crop_center_final(img, new_width=None, new_height=None):
         
     return center_cropped_img, (top, bottom, left, right), padNUm
 
-
+def Resampling(img, resO, resN, method='nearest'):   
+    scF = (resO[0]/resN[0], resO[1]/resN[1])  
+    velO = img.size()[1:3]
+    velN = (int(velO[0]*scF[0]),int(velO[1]*scF[1]))
+    
+    resize = T.Resize((velN), T.InterpolationMode(method))
+    img = resize(img)
+    return img
 
 def resize_with_padding(img, expected_size):
     delta_width = expected_size[0] - img.shape[0]

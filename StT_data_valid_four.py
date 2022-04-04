@@ -18,15 +18,16 @@ import pydicom as dcm
 
 import Utilities as Util
 import Loaders
-import Network_v9 as Network
+# import Network_v9 as Network
+import Network as Network
 
 data_list_test=[]
 
 # ## StT LABELLED - JOINT
 path_data = '/data/rj21/Data/Data_1mm/Joint'  # Linux bioeng358
 data_list = Loaders.CreateDataset_StT_J_dcm(os.path.normpath( path_data ))
-# data_list_test = data_list_test + data_list
-data_list_test = data_list_test + data_list[1028:1154]
+data_list_test = data_list_test + data_list
+# data_list_test = data_list_test + data_list[1028:1154]
 
 # # ## StT LABELLED - P1-30
 # path_data = '/data/rj21/Data/Data_StT_Labaled'  # Linux bioeng358
@@ -59,8 +60,8 @@ data_list_test = data_list_test + data_list[1028:1154]
 
 # version = "v3_1_9_5"
 # version = "v3_3_4"
-# version = "v8_0_3"
-version = "v9_1_1"
+version = "v8_4_2"
+# version = "v9_2_3"
 
 # net = torch.load(r"/data/rj21/MyoSeg/Models/net_v3_0_0.pt")
 # net = torch.load(r"/data/rj21/MyoSeg/Models/net_v1_5.pt")
@@ -92,49 +93,57 @@ velImg = 256;
 for num in range(0,len(data_list_test),1):
 # for num in range(0,100,1):    
 
-    Imgs = torch.tensor(np.zeros((1,1,velImg,velImg) ), dtype=torch.float32)
-    Masks = torch.tensor(np.zeros((1,2,velImg,velImg) ), dtype=torch.float32)
+    Imgs = torch.tensor(np.zeros((1,4,velImg,velImg) ), dtype=torch.float32)
+    Masks = torch.tensor(np.zeros((1,4,velImg,velImg) ), dtype=torch.float32)
 
     
     current_index = data_list_test[num]['slice']
-    img_path = data_list_test[num]['img_path']
-    mask_path = data_list_test[num]['mask_path']
+    img_path1 = data_list_test[num]['img_path']
+    mask_path1 = data_list_test[num]['mask_path']
     nPat = data_list_test[num]['pat_name']
     file_name = data_list_test[num]['file_name']
     seq = data_list_test[num]['Seq']
 
     # img = Loaders.read_nii( img_path, (0,0,current_index,t) )
     # mask = Loaders.read_nii( mask_path, (0,0,current_index,t) )
-    dataset = dcm.dcmread(img_path)
-    img = dataset.pixel_array
-    dataset = dcm.dcmread(mask_path)
-    mask = dataset.pixel_array
-    mask = mask==1
     
-    vel.append(img.shape)
-
-    # img, p_cut, p_pad = Util.crop_center_final(img,velImg,velImg)
-    # mask, p_cut, p_pad = Util.crop_center_final(mask,velImg,velImg)
-
-    img = torch.tensor(np.expand_dims(img, 0).astype(np.float32))
-    mask = torch.tensor(np.expand_dims(mask, 0).astype(np.float32))
-       
-    params = (256,  255,256,  0,0,  0,0,0,0)
-    augm_params=[]
-    augm_params.append({'Output_size': params[0],
-                        'Crop_size': random.randint(params[1],params[2]),
-                        'Angle': random.randint(params[3],params[4]),
-                        'Transl': (random.randint(params[5],params[6]),random.randint(params[7],params[8])),
-                        'Scale': random.uniform(1.0,1.0),
-                        'Flip': False
-                        })
-    img = Util.augmentation2(img, augm_params)
-    mask = Util.augmentation2(mask, augm_params)
-    mask = mask>0.5
+    nImg = ('T1','T2','W1','W4')
+    for c in range(0,4):
+    # for c in range(0,1):
+        
+        img_path = img_path1.replace('W4',nImg[c])
+        mask_path = mask_path1.replace('W4',nImg[c])
+        
+        dataset = dcm.dcmread(img_path)
+        img = dataset.pixel_array
+        dataset = dcm.dcmread(mask_path)
+        mask = dataset.pixel_array
+        mask = mask==1
+        
+        vel.append(img.shape)
     
-    Imgs[0,0,:,:] = img
-    Masks[0,0,:,:] = mask
+        # img, p_cut, p_pad = Util.crop_center_final(img,velImg,velImg)
+        # mask, p_cut, p_pad = Util.crop_center_final(mask,velImg,velImg)
     
+        img = torch.tensor(np.expand_dims(img, 0).astype(np.float32))
+        mask = torch.tensor(np.expand_dims(mask, 0).astype(np.float32))
+           
+        params = (256,  255,256,  0,0,  0,0,0,0)
+        augm_params=[]
+        augm_params.append({'Output_size': params[0],
+                            'Crop_size': random.randint(params[1],params[2]),
+                            'Angle': random.randint(params[3],params[4]),
+                            'Transl': (random.randint(params[5],params[6]),random.randint(params[7],params[8])),
+                            'Scale': random.uniform(1.0,1.0),
+                            'Flip': False
+                            })
+        img = Util.augmentation2(img, augm_params)
+        mask = Util.augmentation2(mask, augm_params)
+        mask = mask>0.5
+        
+        Imgs[0,c,:,:] = img
+        Masks[0,c,:,:] = mask
+        
     
     with torch.no_grad(): 
         res = net( Imgs.cuda() )
@@ -191,13 +200,13 @@ for num in range(0,len(data_list_test),1):
     comp[ctrGT==1]=0
     RGB_imgB[:,:,2] = comp
     
-    Fig = plt.figure()
-    plt.imshow(RGB_imgB)
-    plt.show()
-    plt.draw()
+    # Fig = plt.figure()
+    # plt.imshow(RGB_imgB)
+    # plt.show()
+    # plt.draw()
     
-    Fig.savefig( path_save + '/' + 'res_' + "%.4f" % (dice.item()) + '_' +  nPat + file_name.split('_')[0] + '_' + seq + '_' + current_index + '.png', dpi=150)
-    plt.close(Fig)
+    # Fig.savefig( path_save + '/' + 'res_' + "%.4f" % (dice.item()) + '_' +  nPat + file_name.split('_')[0] + '_' + seq + '_' + current_index + '.png', dpi=150)
+    # plt.close(Fig)
     
 
     

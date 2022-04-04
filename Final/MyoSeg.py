@@ -20,15 +20,22 @@ import Utilities as Util
 
 
 ## -------------- validation for \StT data annotated ------------------
-# path_data = '/data/rj21/Data/Test_data/example_data_joint'  # Linux bioeng358
-# path_save = '/data/rj21/MyoSeg/Final/Results'
-# vNet = '/data/rj21/MyoSeg/Models/net_v9_1_1.pt'
-
+# # path_data = '/data/rj21/Data/Test_data/example_data_joint_sep'  # Linux bioeng358
+# # path_data = '/data/rj21/Data/Test_data/Clin_Unl'  # Linux bioeng358
+# path_data = '/data/rj21/Data/Test_data/T2_Alinas'
+# # path_save = '/data/rj21/Data/Test_data/Res_CLin'
+# path_save = '/data/rj21/Data/Test_data/Res_T2_Alinas'
+# # vNet = '/data/rj21/MyoSeg/Models/net_v9_2_1.pt'
+# vNet = '/data/rj21/MyoSeg/Models/net_v9_1_6_6.pt'
+# path_data = '/data/rj21/Data/Test_data/Res_CLin'
+# path_save = '/media/cv20/Elements/KCL/Data/Res_StTLab'
 
 def Predict(path_data, path_save, vNet):
-            
-    vel_cut = 128
-    if vNet.find('net_v8_3')>=0:
+        
+    if vNet.find('net_v8')>=0:  
+        vel_cut = 128
+        
+    if vNet.find('net_v8_3')>=0 or vNet.find('net_v8_4')>=0:
         vel_cut = 256
         
     if vNet.find('net_v9_')>=0:
@@ -53,16 +60,24 @@ def Predict(path_data, path_save, vNet):
         
         dataset = dcm.dcmread(file)
         img = dataset.pixel_array
-        img_orig = img.copy()
         
         RescaleSlope=1
         if len(dataset.dir('RescaleSlope'))>0:
             RescaleSlope = float(dataset['RescaleSlope'].value)
         RescaleIntercept=1
         if len(dataset.dir('RescaleIntercept'))>0:
-            RescaleIntercept = float(dataset['RescaleIntercept'].value)
-               
+            RescaleIntercept = float(dataset['RescaleIntercept'].value)   
         img = img*RescaleSlope + RescaleIntercept
+    
+    
+        if len(dataset.dir('PixelSpacing'))>0:
+            resO = (dataset['PixelSpacing'].value[0:2])
+        else:
+            resO = (2.0, 2.0)
+        resN = (1.0, 1.0)             
+        img = torch.tensor(np.expand_dims(img, [0]).astype(np.float32))
+        img = Util.Resampling(img, resO, resN, 'bilinear').detach().numpy()[0,:,:]
+        
         imgOrig = img.copy()
         
         vel = np.shape(img)
@@ -76,7 +91,6 @@ def Predict(path_data, path_save, vNet):
                 res = torch.sigmoid(res)
             else:
                 res = torch.softmax(res,dim=1)
-           
         
         res = res[0,0,:,:].detach().cpu().numpy()>0.5
         
@@ -110,7 +124,7 @@ def Predict(path_data, path_save, vNet):
             
         dataset.save_as(full_path_save + '.dcm')
         
-        mdic = {"segm_mask": res1, "dcm_data": img_orig}
+        mdic = {"segm_mask": res1, "dcm_data": imgOrig}
         savemat( str(full_path_save +'.mat'), mdic)
     
         # Util.progress(i, len(data_list), status='in progress')
@@ -119,15 +133,26 @@ def Predict(path_data, path_save, vNet):
         # print(filled_len)
         # print(filled_len_old)
         if not (int(filled_len) == int(filled_len_old)):
-            print( "%.2f" % ( i/len(data_list)) + '%')
+            print( "%.0f" % ( i/len(data_list)*100 ) + '%')
             filled_len_old = filled_len
      
-    print( '1.00% ... done' )
+    print( '100% ... done' )
         
         
 def PredictFour(path_data, path_save, vNet):
-    
-    vel_cut = 256
+            
+    if vNet.find('net_v8')>=0:  
+        vel_cut = 128
+        
+    if vNet.find('net_v8_3')>=0 or vNet.find('net_v8_4')>=0:
+        vel_cut = 256
+        
+    if vNet.find('net_v9_')>=0:
+        vel_cut = 256
+        import Network_v9 as Network
+    else:
+        import Network as Network
+        
     
     data_list = glob.glob(os.path.normpath( path_data + '/**/T1/*.dcm' ), recursive=True)
     # data_list = data_list[100:101]
@@ -170,7 +195,10 @@ def PredictFour(path_data, path_save, vNet):
         
         with torch.no_grad(): 
             res = net( Imgs.cuda() )
-            res = torch.softmax(res,dim=1)
+            if vNet.find('net_v9_')>=0:
+                res = torch.sigmoid(res)
+            else:
+                res = torch.softmax(res,dim=1)
         
         res = res[0,0,:,:].detach().cpu().numpy()>0.5
         

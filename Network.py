@@ -107,9 +107,74 @@ class Net(nn.Module):
             out = F.interpolate(out, self.out_sz)
         return out
     
-class Training():     
+class Training():  
     
     def straightForward(data_list, net, params, TrainMode=True, Contrast=False): 
+
+        net.train(mode=TrainMode)
+        batch = len(data_list)
+        vel = params[0]
+        # vel = 256
+          
+        Imgs = torch.tensor(np.zeros((batch,1,vel,vel) ), dtype=torch.float32)
+        Masks = torch.tensor(np.zeros((batch,1,vel,vel) ), dtype=torch.float32)
+        
+        for b in range(0,batch):
+            current_index = data_list[b]['slice']
+            img_path1 = data_list[b]['img_path']
+            mask_path1 = data_list[b]['mask_path']
+            
+            augm = random.uniform(0, 1)>=0.3
+            # augm = True
+            augm_params=[]; t=0
+            augm_params.append({'Output_size': params[0],
+                            'Crop_size': random.randint(params[1],params[2]),
+                            'Angle': random.randint(params[3],params[4]),
+                            'Transl': (random.randint(params[5],params[6]),random.randint(params[7],params[8])),
+                            'Scale': random.uniform(1.0,1.0),
+                            'Flip':  np.random.random()>0.5
+                            })
+
+            img_path = img_path1
+            mask_path = mask_path1
+            
+            if img_path.find('.nii')>0:
+                img = Util.read_nii( img_path, (0,0,current_index,t) )
+                mask = Util.read_nii( mask_path, (0,0,current_index,t) )
+                mask = mask==2
+            elif img_path.find('.dcm')>0:
+                dataset = dcm.dcmread(img_path)
+                img = dataset.pixel_array.astype(dtype='float32')
+                dataset = dcm.dcmread(mask_path)
+                mask = dataset.pixel_array
+                mask = mask==1    
+            
+            if not augm:
+                img = Util.resize_with_padding(img,(vel,vel))
+                mask = Util.resize_with_padding(mask,(vel,vel))    
+            
+            img = np.expand_dims(img, 0).astype(np.float32)
+            mask = np.expand_dims(mask, 0).astype(np.float32)    
+
+            img = torch.tensor(img)
+            mask = torch.tensor(mask)
+            
+            if  augm:
+                img = Util.augmentation2(img, augm_params)
+                mask = Util.augmentation2(mask, augm_params)
+                mask = mask>0.5   
+        
+            Imgs[b,0,:,:] = img
+            Masks[b,0,:,:] = mask
+
+        res = net( Imgs.cuda() )
+        res = torch.softmax(res,dim=1)
+        loss = Util.dice_loss( res[:,0,:,:], Masks[:,0,:,:].cuda() )
+        
+        return loss, res, Imgs, Masks
+    
+    
+    def straightForwardFour(data_list, net, params, TrainMode=True, Contrast=False): 
 
         net.train(mode=TrainMode)
         batch = len(data_list)
