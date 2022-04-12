@@ -10,7 +10,7 @@ import pydicom as dcm
 import Utilities as Util
 from torch.nn import init
 import random
-# import matplotlib.pyplot as plt
+import matplotlib.pyplot as plt
 # from PIL import Image 
 
 
@@ -174,7 +174,14 @@ class AttU_Net(nn.Module):
         d2 = self.Up_conv2(d2)
 
         d1 = self.Conv_1x1(d2)
-
+        
+        # m, s = torch.min(x1,(2,3)), torch.max(x1,(2,3))
+        # x1 = (x1 - m[:,:,None, None]) / (m[:,:,None,None]-s)
+        
+        plt.figure()
+        plt.imshow(np.mean(x1[0,:,:,:].detach().cpu().numpy(),0),vmin=0, vmax=1)
+        plt.show()
+        
         return d1
 
     
@@ -208,14 +215,15 @@ class Training():
             if len(dataset.dir('PixelSpacing'))>0:
                 resO = (dataset['PixelSpacing'].value[0:2])
             else:
-                resO = (2.0, 2.0)
+                resO = (1.0, 1.0)
             
-            resN = (1.0, 1.0)
+            resN = (params[11],params[11])
+            
             ## Resamplinmg to 1mm 
-            # img = torch.tensor( np.expand_dims(img, 0).astype(np.float32))
-            # mask = torch.tensor(np.expand_dims(mask, 0).astype(np.float32) )             
-            # img = Util.Resampling(img, resO, resN, 'bilinear').detach().numpy()[0,:,:]
-            # mask = Util.Resampling(mask, resO,  resN, 'nearest').detach().numpy()[0,:,:]
+            img = torch.tensor( np.expand_dims(img, 0).astype(np.float32))
+            mask = torch.tensor(np.expand_dims(mask, 0).astype(np.float32) )             
+            img = Util.Resampling(img, resO, resN, 'bilinear').detach().numpy()[0,:,:]
+            mask = Util.Resampling(mask, resO,  resN, 'nearest').detach().numpy()[0,:,:]
             
             augm_params=[]
             augm_params.append({'Output_size': params[0],

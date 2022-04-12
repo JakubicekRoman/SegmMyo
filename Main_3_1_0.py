@@ -16,20 +16,20 @@ from scipy.stats import norm
 
 import Utilities as Util
 import Loaders
-# import Network as Network
-import Network_v9 as Network
+import Network as Network
+# import Network_v9 as Network
 
 
-lr         = 0.001
+lr         = 0.0001
 L2         = 0.000001
 batch      = 8
-step_size  = 20
-sigma      = 0.7
+step_size  = 200
+sigma      = 10.7
 lambda_Cons = 0.01
 lambda_Other = 0.1
 lambda_Train = 1.0
-num_ite    = 80
-num_epch   = 50
+num_ite    = 50
+num_epch   = 500
 
 
 batchTr = int(np.round(batch))
@@ -43,8 +43,8 @@ torch.cuda.empty_cache()
 # net = torch.load(r"/data/rj21/MyoSeg/Models/net_v9_0_1.pt")
 # net = torch.load(r"/data/rj21/MyoSeg/Models/net_v9_1_2.pt")
 # net = torch.load(r"/data/rj21/MyoSeg/Models/net_v8_2_0.pt")
-# net = torch.load(r"/data/rj21/MyoSeg/Models/net_v8_2_0.pt")
-net = torch.load(r"/data/rj21/MyoSeg/Models/net_v9_2_0_0.pt")
+net = torch.load(r"/data/rj21/MyoSeg/Models/net_v8_2_0.pt")
+# net = torch.load(r"/data/rj21/MyoSeg/Models/net_v9_2_0_0.pt")
 
 # Network.init_weights(net,init_type= 'xavier', gain=0.02)
 
@@ -64,27 +64,27 @@ data_list_1_train=[];data_list_1_test=[];
 # data_list_1_train, data_list_1_test = Loaders.CreateDataset_ACDC(os.path.normpath( path_data ))
   
 # # # ## StT LABELLED - A1-15 and P1-30
-# path_data = '/data/rj21/Data/Data_1mm/Clin'  # Linux bioeng358
-path_data = '/data/rj21/Data/Data_StT_Labaled'  # Linux bioeng358
-data_list = Loaders.CreateDataset_StT_P_dcm(os.path.normpath( path_data ), 'A','_m')
-b = int(len(data_list)*0.80)
-data_list_1_train = data_list_1_train + data_list[1:b]
-data_list_1_test = data_list_1_test + data_list[b+1:-1]
-data_list = Loaders.CreateDataset_StT_P_dcm(os.path.normpath( path_data ), 'P','_m')
-b = int(len(data_list)*0.80)
-data_list_1_train = data_list_1_train + data_list[1:b]
-data_list_1_test = data_list_1_test + data_list[b+1:-1]
+# # path_data = '/data/rj21/Data/Data_1mm/Clin'  # Linux bioeng358
+# path_data = '/data/rj21/Data/Data_StT_Labaled'  # Linux bioeng358
+# data_list = Loaders.CreateDataset_StT_P_dcm(os.path.normpath( path_data ), 'A','_m')
+# b = int(len(data_list)*0.80)
+# data_list_1_train = data_list_1_train + data_list[1:b]
+# data_list_1_test = data_list_1_test + data_list[b+1:-1]
+# data_list = Loaders.CreateDataset_StT_P_dcm(os.path.normpath( path_data ), 'P','_m')
+# b = int(len(data_list)*0.80)
+# data_list_1_train = data_list_1_train + data_list[1:b]
+# data_list_1_test = data_list_1_test + data_list[b+1:-1]
 
 
 # ## StT LABELLED - JOINT
-# # path_data = '/data/rj21/Data/Data_Joint_StT_Labelled/Resaved_data_StT_cropped'  # Linux bioeng358
-# path_data = '/data/rj21/Data/Data_1mm/Joint'  # Linux bioeng358
-# data_list = Loaders.CreateDataset_StT_J_dcm(os.path.normpath( path_data ))
-# b = int(len(data_list)*0.80)
-# # data_list_1_train = data_list[1:b]
-# # data_list_1_test = data_list[b+1:-1]
-# data_list_1_train = data_list_1_train + data_list[1:b]
-# data_list_1_test = data_list_1_test + data_list[b+1:-1]
+# path_data = '/data/rj21/Data/Data_Joint_StT_Labelled/Resaved_data_StT_cropped'  # Linux bioeng358
+path_data = '/data/rj21/Data/Data_1mm/Joint'  # Linux bioeng358
+data_list = Loaders.CreateDataset_StT_J_dcm(os.path.normpath( path_data ))
+b = int(len(data_list)*0.80)
+# data_list_1_train = data_list[1:b]
+# data_list_1_test = data_list[b+1:-1]
+data_list_1_train = data_list_1_train + data_list[1:b]
+data_list_1_test = data_list_1_test + data_list[b+1:-1]
     
 
 # # ## Alinas data
@@ -148,35 +148,35 @@ for epch in range(0,num_epch):
         del Masks, res
         
         # ## Pro Other dataset
-        Indx_Sort = Util.rand_norm_distrb(batchTr, mu2, sigma2, [0,len(data_list_2_train)]).astype('int')
-        Indx_Orig = D2[Indx_Sort,0].astype('int')
-        sub_set = list(map(data_list_2_train.__getitem__, Indx_Orig))  
+        # Indx_Sort = Util.rand_norm_distrb(batchTr, mu2, sigma2, [0,len(data_list_2_train)]).astype('int')
+        # Indx_Orig = D2[Indx_Sort,0].astype('int')
+        # sub_set = list(map(data_list_2_train.__getitem__, Indx_Orig))  
         
-        loss_Other, res2, _, Masks2 = Network.Training.straightForward(sub_set, net, params, TrainMode=True, Contrast=False)
+        # loss_Other, res2, _, Masks2 = Network.Training.straightForward(sub_set, net, params, TrainMode=True, Contrast=False)
                                            
-        dice = Util.dice_coef_batch( res2[:,0,:,:]>0.5, Masks2[:,0,:,:].cuda() )                
-        diceTr2.append(dice.detach().cpu().numpy())
-        D2[np.array(Indx_Sort),1] = np.array(dice.detach().cpu().numpy())
-        del Masks2, res2
+        # dice = Util.dice_coef_batch( res2[:,0,:,:]>0.5, Masks2[:,0,:,:].cuda() )                
+        # diceTr2.append(dice.detach().cpu().numpy())
+        # D2[np.array(Indx_Sort),1] = np.array(dice.detach().cpu().numpy())
+        # del Masks2, res2
         
         D1 = D1[D1[:, 1].argsort()]
         D2 = D2[D2[:, 1].argsort()]
         
     ## Consistency regularization
-        params = (256,  186,276 ,  -170,170,  -40,40,-40,40 ,  0.9,1.2 )
-        batchCons = 4
-        Indx = np.random.randint(0,len(data_list_3_train),(batchCons,)).tolist()
-        sub_set = list(map(data_list_3_train.__getitem__, Indx))
-        loss_cons, _, _, _ = Network.Training.Consistency(sub_set, net, params, TrainMode=True, Contrast=False)
-        diceTr3.append(1 - loss_cons.detach().cpu().numpy())
+        # params = (256,  186,276 ,  -170,170,  -40,40,-40,40 ,  0.9,1.2 )
+        # batchCons = 
+        # Indx = np.random.randint(0,len(data_list_3_train),(batchCons,)).tolist()
+        # sub_set = list(map(data_list_3_train.__getitem__, Indx))
+        # loss_cons, _, _, _ = Network.Training.Consistency(sub_set, net, params, TrainMode=True, Contrast=False)
+        # diceTr3.append(1 - loss_cons.detach().cpu().numpy())
         
     ## backF - training
         net.train(mode=True)
         if epch>0:
-            # loss = lambda_Train*loss_train
+            loss = lambda_Train*loss_train
             # loss = lambda_Train*loss_train + lambda_Other*loss_Other
             # loss = lambda_Train*loss_train + lambda_Other*loss_Other + lambda_Cons*loss_cons 
-            loss = lambda_Train*loss_train + np.mean(HD2) + lambda_Other*loss_Other + lambda_Cons*loss_cons 
+            # loss = lambda_Train*loss_train + np.mean(HD2) + lambda_Other*loss_Other + lambda_Cons*loss_cons 
             # loss = lambda_Train*loss_train + lambda_Cons*loss_cons 
 
             optimizer.zero_grad()
@@ -208,10 +208,10 @@ for epch in range(0,num_epch):
     ### validation
     params = (256,  256,256,  -0,0,  -0,0,-0,0,    1.0,1.0,   1.0)
     # params = (128,  108,148, -170,170,  -10,10,-10,10)
-    batchTe = 32
+    batchTe = 64
     random.shuffle(data_list_1_test)
     # for num in range(0,len(data_list_1_test), batchTe):
-    for num in range(0,5):   
+    for num in range(0,4):   
         sub_set = data_list_1_test[num:num+batchTe]
         with torch.no_grad():
             _, resTe, ImgsTe, MasksTE = Network.Training.straightForward(sub_set, net, params, TrainMode=False, Contrast=False)       
@@ -272,8 +272,9 @@ for epch in range(0,num_epch):
     # plt.legend()
     # plt.show()
     
-version = "v9_2_1_2"
-# version = "v8_3_9_4"
+# version = "v9_2_1_2"
+version = "v8_3_7_1"
+
 torch.save(net, 'Models/net_' + version + '.pt')
 
 file_name = "Models/Res_net_" + version + ".pkl"

@@ -4,6 +4,7 @@ Data_MaM/
 Data_ACDC/
 Models/
 valid/
+Export/postprocess
 Export/exported_images/
 Export/contrast_augment/
 Final/Results/

@@ -178,9 +178,9 @@ class AttU_Net(nn.Module):
         # m, s = torch.min(x1,(2,3)), torch.max(x1,(2,3))
         # x1 = (x1 - m[:,:,None, None]) / (m[:,:,None,None]-s)
         
-        plt.figure()
-        plt.imshow(np.mean(x1[0,:,:,:].detach().cpu().numpy(),0),vmin=0, vmax=1)
-        plt.show()
+        # plt.figure()
+        # plt.imshow(np.mean(x1[0,:,:,:].detach().cpu().numpy(),0),vmin=0, vmax=1)
+        # plt.show()
         
         return d1
 

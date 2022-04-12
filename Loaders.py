@@ -162,8 +162,6 @@ def CreateDataset_StT_P_dcm(path_data, text1, text2):
         if pat_name.find(text1)>=0:
             for _,file in enumerate(f):
                 if file.find('_gt')>0:
-                    # if file.find('Joint')>=0 and file.find('_W')<0:
-                    # if file.find(text1)>=0 and
                     if file.find(text2)>=0:
                         
                         path_mask = os.path.join(path_data, pat_name, file)

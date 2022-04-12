@@ -222,6 +222,25 @@ def resize_with_padding(img, expected_size):
     return img
 
 
+def rot_transl(img, r, transl, flip=False, invers=False):
+    
+    velImg = np.size(img)
+    
+    img = torch.tensor(np.expand_dims(img, [0]).astype(np.float32))
+    
+    if invers:
+        if flip:
+            img = torch.flip(img, [len(img.size())-1])
+        img = T.functional.affine(img, 0, (-transl[0],-transl[1]), 1.0, 0.0,  T.InterpolationMode('bilinear'))
+        img = T.functional.affine(img, -r, (0,0), 1.0, 0.0,  T.InterpolationMode('bilinear'))
+    else:
+        img = T.functional.affine(img, r, (0,0), 1.0, 0.0,  T.InterpolationMode('bilinear'))
+        img = T.functional.affine(img, 0, transl, 1.0, 0.0,  T.InterpolationMode('bilinear'))
+        if flip:
+            img = torch.flip(img, [len(img.size())-1])
+    
+    
+    return img[0,:,:].detach().numpy()
 
 def dice_loss(X, Y):
     eps = 0.00001
@@ -230,8 +249,8 @@ def dice_loss(X, Y):
 
 
 def dice_coef(X, Y):
-    eps = 0.000001
-    dice = ((2. * torch.sum(X*Y) + eps) / (torch.sum(X) + torch.sum(Y) + eps) )
+    # eps = 0.000001
+    dice = ((2. * torch.sum(X*Y)) / (torch.sum(X) + torch.sum(Y)) )
     return dice
 
 def dice_coef_batch(X, Y):

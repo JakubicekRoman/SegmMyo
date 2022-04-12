@@ -8,7 +8,7 @@ D = dir([path '/*2D*.mat'])
 img = [];
 mask = [];
 
-for i = 1:length(D)  
+for i = 1:length(D) 
     load([D(i).folder '/' D(i).name])
     img(:,:,i) = dcm_data;
     mask(:,:,i) = segm_mask;
