@@ -270,14 +270,14 @@ def CreateDataset( ):
     # data_list_2_train, data_list_2_test = CreateDataset_ACDC(os.path.normpath( path_data )
                                                              
     ## StT LABELLED - JOINT
-    # # path_data = '/data/rj21/Data/Data_Joint_StT_Labelled/Resaved_data_StT_cropped'  # Linux bioeng358
-    # path_data = '/data/rj21/Data/Data_1mm/Joint'  # Linux bioeng358
-    # data_list = CreateDataset_StT_J_dcm(os.path.normpath( path_data ))
-    # data_list_2 = data_list_2 + data_list
+    # path_data = '/data/rj21/Data/Data_Joint_StT_Labelled/Resaved_data_StT_cropped'  # Linux bioeng358
+    path_data = '/data/rj21/Data/Data_1mm/Joint'  # Linux bioeng358
+    data_list = CreateDataset_StT_J_dcm(os.path.normpath( path_data ))
+    data_list_2 = data_list_2 + data_list
     
     ## StT LABELLED - P1-30
     path_data = '/data/rj21/Data/Data_StT_Labaled'  # Linux bioeng358
-    data_list = CreateDataset_StT_P_dcm(os.path.normpath( path_data ),'','')
+    data_list = CreateDataset_StT_P_dcm(os.path.normpath( path_data ),'','_m')
     # b = int(len(data_list)*0.55)
     # random.shuffle(data_list_4_train)
     data_list_2 = data_list_2 + data_list

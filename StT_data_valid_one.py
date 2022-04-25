@@ -21,8 +21,8 @@ from scipy.io import savemat
 
 import Utilities as Util
 import Loaders
-# import Network_v9 as Network
-import Network as Network
+import Network_v9 as Network
+# import Network as Network
 #
 data_list_test=[]
 
@@ -36,23 +36,23 @@ data_list_test=[]
 
 # # ## StT LABELLED - P1-30
 # path_data = '/data/rj21/Data/Data_StT_Labaled'  # Linux bioeng358
-# data_list = Loaders.CreateDataset_StT_P_dcm(os.path.normpath( path_data ),'','_m')
+# data_list = Loaders.CreateDataset_StT_P_dcm(os.path.normpath( path_data ),'P','_m')
+# # data_list_test = data_list_test + data_list
+# b = int(len(data_list)*0.55)
+# data_list_test = data_list[b+1:]
+
+# # ## StT LABELLED - Anastazia Valid
+# path_data = '/data/rj21/Data/Data_StT_Anast_valid'  # Linux bioeng358
+# data_list = Loaders.CreateDataset_StT_P_dcm(os.path.normpath( path_data ),'','')
 # data_list_test = data_list_test + data_list
 # # b = int(len(data_list)*0.55)
 # # data_list_test = data_list[b+1:]
 
-# # ## StT LABELLED - Anastazia Valid
-path_data = '/data/rj21/Data/Data_StT_Anast_valid'  # Linux bioeng358
+##  StT LABELLED - Alina data T2
+# path_data = '/data/rj21/Data/Data_T2_Alina/dcm_resaved'  # Linux bioeng358
+path_data = '/data/rj21/Data/Data_1mm/T2_alina'
 data_list = Loaders.CreateDataset_StT_P_dcm(os.path.normpath( path_data ),'','')
 data_list_test = data_list_test + data_list
-# b = int(len(data_list)*0.55)
-# data_list_test = data_list[b+1:]
-
-##  StT LABELLED - Alina data T2
-# # path_data = '/data/rj21/Data/Data_T2_Alina/dcm_resaved'  # Linux bioeng358
-# path_data = '/data/rj21/Data/Data_1mm/T2_alina'
-# data_list = Loaders.CreateDataset_StT_P_dcm(os.path.normpath( path_data ),'','')
-# # data_list_test = data_list_test + data_list
 # b = int(len(data_list)*0.80)
 # data_list_test = data_list_test + data_list[b+1:]
 
@@ -66,23 +66,32 @@ data_list_test = data_list_test + data_list
 # # b = int(len(data_list)*0.80)
 # # data_list_test = data_list_test + data_list[b+1:]
 
+# version = "v8_3_4"
+# version = "v8_3_9_1"
+# version = "v8_3_9_4"
+
+# version = 'v9_1_6_6'
+# version = 'v9_2_1_2'
 
 # version = "v8_3_9_1_1"
-version = "v8_3_9_4"
+# version = "v8_3_9_4"
 # version = "v9_2_1_0"
 # version = "v9_1_6_6"
-# version = "v9_2_0_0"
+
+# version = "v9_2_1_6"
+version = 'v9_1_6_8'
+# version = 'v8_3_8_1'
 
 net = torch.load(r"/data/rj21/MyoSeg/Models/net_" + version + ".pt")
 net = net.cuda()
 
-path_save = '/data/rj21/MyoSeg/valid/Val_clin_mat/'
+path_save = '/data/rj21/MyoSeg/valid/Val_fin/Alinas'
 version = version + ""
 
 # save_name = 'Joint_valid'
 # save_name = 'All_valid'
 # save_name = 'alinas_valid'
-save_name = 'Anast_pp'
+save_name = ''
 
 try:
     os.mkdir(path_save)
@@ -95,6 +104,8 @@ diceTe=[]
 vel=[]
 iii=0
 velImg = 256;
+# velImg = 128;
+
 params = (velImg,  velImg,velImg,  0,0,  0,0,0,0,   1.0,1.0,  1.0) 
 
 for num in range(0,len(data_list_test),1):
@@ -124,8 +135,12 @@ for num in range(0,len(data_list_test),1):
     if len(dataset.dir('PixelSpacing'))>0:
         resO = (dataset['PixelSpacing'].value[0:2])
     else:
-        resO = (2.0, 2.0)
-        
+        # resO = (1.0, 1.0)
+        resO = (0.9, 0.9)
+     
+    # resO = (2.0, 2.0)
+    # resN = (2.0,2.0)
+
     resN = (params[11],params[11])
     
     # img, p_cut, p_pad = Util.crop_center_final(img,velImg,velImg)
@@ -253,7 +268,7 @@ for num in range(0,len(data_list_test),1):
     dice = Util.dice_coef( res, mask )  
     diceM = Util.dice_coef( resM, mask )         
  
-    A = resM.detach().cpu().numpy()>tresh
+    A = res.detach().cpu().numpy()>tresh
     B = mask.detach().cpu().numpy()>0.5
     HD = np.max((Util.MASD_compute(A,B),Util.MASD_compute(B,A)))
               
@@ -302,44 +317,45 @@ for num in range(0,len(data_list_test),1):
     #         res = np.median(Res,0) > tresh  
     
     res = np.median(Res,0) > tresh
+    # res = Res[8,:,:]>tresh
  
-    # resB = res.astype(np.dtype('uint8'))
-    # dimg = cv2.dilate(resB, cv2.getStructuringElement(cv2.MORPH_ELLIPSE,(3,3)) )
-    # ctr = dimg - resB
+    resB = res.astype(np.dtype('uint8'))
+    dimg = cv2.dilate(resB, cv2.getStructuringElement(cv2.MORPH_ELLIPSE,(3,3)) )
+    ctr = dimg - resB
     
-    # GT = (mask.detach().cpu().numpy()>0.5).astype(np.dtype('uint8'))
-    # dimg = cv2.dilate(GT, cv2.getStructuringElement(cv2.MORPH_ELLIPSE,(3,3)) )
-    # ctrGT = dimg - GT
+    GT = (mask.detach().cpu().numpy()>0.5).astype(np.dtype('uint8'))
+    dimg = cv2.dilate(GT, cv2.getStructuringElement(cv2.MORPH_ELLIPSE,(3,3)) )
+    ctrGT = dimg - GT
     
-    # imgB = img[0,:,:].numpy().astype(np.dtype('float'))
-    # imgB = (( imgB - imgB.min() ) / (imgB.max() - imgB.min()) )
-    # RGB_imgB = cv2.cvtColor((imgB*255).astype(np.dtype('uint8')),cv2.COLOR_GRAY2RGB)
+    imgB = img[0,:,:].numpy().astype(np.dtype('float'))
+    imgB = (( imgB - imgB.min() ) / (imgB.max() - imgB.min()) )
+    RGB_imgB = cv2.cvtColor((imgB*255).astype(np.dtype('uint8')),cv2.COLOR_GRAY2RGB)
     
-    # comp = RGB_imgB[:,:,0]
-    # comp[ctr==1]=255
-    # comp[ctrGT==1]=0
-    # RGB_imgB[:,:,0] = comp
+    comp = RGB_imgB[:,:,0]
+    comp[ctr==1]=255
+    comp[ctrGT==1]=0
+    RGB_imgB[:,:,0] = comp
     
-    # comp = RGB_imgB[:,:,1]
-    # comp[ctr==1]=0
-    # comp[ctrGT==1]=255
-    # RGB_imgB[:,:,1] = comp
+    comp = RGB_imgB[:,:,1]
+    comp[ctr==1]=0
+    comp[ctrGT==1]=255
+    RGB_imgB[:,:,1] = comp
     
-    # comp = RGB_imgB[:,:,2]
-    # comp[ctr==1]=0
-    # comp[ctrGT==1]=0
-    # RGB_imgB[:,:,2] = comp
+    comp = RGB_imgB[:,:,2]
+    comp[ctr==1]=0
+    comp[ctrGT==1]=0
+    RGB_imgB[:,:,2] = comp
     
-    # Fig = plt.figure()
-    # plt.imshow(RGB_imgB)
-    # # plt.show()
-    # # plt.draw()
+    Fig = plt.figure()
+    plt.imshow(RGB_imgB)
+    plt.show()
+    plt.draw()
         
-    # Fig.savefig( path_save + '/' + 'res_' + '_' +  nPat + file_name.split('_')[0] + '_' + seq + '_' + str(current_index) + '.png', dpi=150)
-    # # Fig.savefig( path_save + '/' + 'res_' + "%.4f" % (dice.item()) + '_' +  nPat + file_name.split('_')[0] + '_' + seq + '_' + str(current_index) + '.png', dpi=150)
-    # plt.close(Fig)
+    Fig.savefig( path_save + '/' + 'res_' + '_' +  nPat + file_name.split('_')[0] + '_' + seq + '_' + str(current_index) + '.png', dpi=150)
+    # Fig.savefig( path_save + '/' + 'res_' + "%.4f" % (dice.item()) + '_' +  nPat + file_name.split('_')[0] + '_' + seq + '_' + str(current_index) + '.png', dpi=150)
+    plt.close(Fig)
     
-    mdic = {"segm_mask": res, "dcm_data": img[0,:,:].numpy(), "prob_maps": Res}
+    mdic = {"segm_mask": res, "dcm_data": img[0,:,:].numpy(), "prob_maps": Res, "GT":B}
     savemat(  path_save + '/' + version[0:2] + '_' +  nPat + file_name.split('_')[0] + '_' + seq + '_' + current_index + '.mat', mdic)
 
 res_table.Dice.mean()    
