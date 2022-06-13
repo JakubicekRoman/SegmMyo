@@ -39,7 +39,7 @@ def read_nii(file_name, current_index):
     # img = np.pad(img,((addX[2],addX[3]),(addX[0],addX[1]),(0,0)),'constant',constant_values=(-1024, -1024))
 
 
-    return img
+    return img, file_reader.GetSpacing()
 
 
 def size_nii(file_name):
@@ -249,8 +249,8 @@ def dice_loss(X, Y):
 
 
 def dice_coef(X, Y):
-    # eps = 0.000001
-    dice = ((2. * torch.sum(X*Y)) / (torch.sum(X) + torch.sum(Y)) )
+    eps = 0.000001
+    dice = ((2. * torch.sum(X*Y) + eps) / (torch.sum(X) + torch.sum(Y)) + eps)
     return dice
 
 def dice_coef_batch(X, Y):
