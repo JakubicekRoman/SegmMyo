@@ -17,20 +17,20 @@ from operator import itemgetter
 
 import Utilities as Util
 import Loaders
-import Network as Network
-# import Network_v9 as Network
+# import Network as Network
+import Network_Att as Network
 
 
 lr         = 0.001
 L2         = 0.000001
-batch      = 16
-step_size  = 40
+batch      = 12
+step_size  = 300
 sigma      = 0.7
 lambda_Cons = 0.001
 lambda_Other = 0.2
 lambda_Spec = 1.0
 num_ite    = 50
-num_epch   = 100
+num_epch   = 700
 
 
 batchTr = int(np.round(batch))
@@ -39,15 +39,16 @@ num_ite = int(np.round(num_ite))
  
 torch.cuda.empty_cache()  
  
-## Create new netowrk UNet
-# net = Network.U_Net(img_ch=1,output_ch=1)
+# ## Create new netowrk UNet
+# net = Network.AttU_Net(img_ch=1,output_ch=1)
+# # net = Network.U_Net(img_ch=1,output_ch=1)
 # Network.init_weights(net,init_type= 'xavier', gain=0.02)
 
 ## Load pretrained model
 # net = torch.load(r"/data/rj21/MyoSeg/Models/net_v10_0_0.pt")
-net = torch.load(r"/data/rj21/MyoSeg/Models/net_v10_1_3.pt")
+net = torch.load(r"/data/rj21/MyoSeg/Models/net_v10_6_0.pt")
 
-version_new = "v10_3_10"
+version_new = "v10_6_1"
 
 net = net.cuda()
 optimizer = optim.Adam(net.parameters(), lr=lr, weight_decay=L2)
@@ -58,7 +59,7 @@ scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=step_size, gamma=0.1,
 # data_list_2_train, data_list_3_train = Loaders.CreateDataset()
 # random.shuffle(data_list_2_train)
 
-data_list_2_train, data_list_2_test, data_list_3_train = Loaders.CreateDataset_div()
+data_list_2_train, data_list_2_test, data_list_3_train = Loaders.CreateDataset_div_train()
 
 data_list_1_train=[];data_list_1_test=[];
 # data_list_2_train=[];data_list_2_test=[];
@@ -136,7 +137,7 @@ for epch in range(0,num_epch):
         Indx_Orig = D1[Indx_Sort,0].astype('int')
         sub_set = list(map(data_list_1_train.__getitem__, Indx_Orig))
         
-        loss_Spec, res, _, Masks = Network.Training.straightForward(sub_set, net, params, TrainMode=True, Contrast=False)
+        loss_Spec, res, Imgs5, Masks = Network.Training.straightForward(sub_set, net, params, TrainMode=True, Contrast=False)
         # loss_train, res, Imgs, Masks = Network.Training.straightForwardFour(sub_set, net, params, TrainMode=True, Contrast=False)
                                   
         dice = Util.dice_coef_batch( res[:,0,:,:]>0.5, Masks[:,0,:,:].cuda() )                
@@ -174,18 +175,19 @@ for epch in range(0,num_epch):
         
         
     ## Consistency regularization
-        # params = (256,  186,276 ,  -170,170,  -40,40,-40,40 ,  0.9,1.1 , 1.0)
-        # batchCons = 8
-        # Indx = np.random.randint(0,len(data_list_3_train),(batchCons)).tolist()
-        # sub_set = list(map(data_list_3_train.__getitem__, Indx))
-        # loss_cons, _, _, _ = Network.Training.Consistency(sub_set, net, params, TrainMode=True, Contrast=False)
-        # diceTr3.append(1 - loss_cons.detach().cpu().numpy())
+        params = (256,  186,276 ,  -170,170,  -40,40,-40,40 ,  0.8,1.2 , 1.0)
+        batchCons = 6
+        Indx = np.random.randint(0,len(data_list_3_train),(batchCons)).tolist()
+        sub_set = list(map(data_list_3_train.__getitem__, Indx))
+        loss_cons, _, _, _ = Network.Training.Consistency(sub_set, net, params, TrainMode=True, Contrast=False)
+        diceTr3.append(1 - loss_cons.detach().cpu().numpy())
        
         
     ## backF - training
         net.train(mode=True)
         if epch>0:
-            loss = lambda_Spec*loss_Spec + np.mean(HD1)
+            # loss = lambda_Spec*loss_Spec + np.mean(HD1)
+            loss = lambda_Spec*loss_Spec + np.mean(HD1) + lambda_Cons*loss_cons
             # loss = lambda_Other*loss_Other + lambda_Spec*loss_Spec + np.mean(HD1) 
             # loss = lambda_Other*loss_Other + np.mean(HD2) + lambda_Cons*loss_cons 
 
@@ -238,7 +240,7 @@ for epch in range(0,num_epch):
     #     #     B = MasksTE[b,0,:,:].detach().cpu().numpy()>0.5
     #     #     HD1.append (np.max((Util.MASD_compute(A,B),Util.MASD_compute(B,A))))
         
-    random.shuffle(data_list_1_test)
+    # random.shuffle(data_list_1_test)
     # for num in range(0,len(data_list_1_test), batchTe):
     for num in range(0, int(np.floor(len(data_list_1_test)) *1.0 ) , batchTe ):   
         # sub_set = data_list_1_test[num:num+batchTe]
@@ -264,7 +266,7 @@ for epch in range(0,num_epch):
     diceTe_Other.append(np.nanmean(diceTe2))  
     diceTr_Spec.append(np.nanmean(diceTr1))
     diceTe_Spec.append(np.nanmean(diceTe1))
-    # diceTr_Cons.append(np.mean(diceTr3))
+    diceTr_Cons.append(np.nanmean(diceTr3))
 
     # HD_Te_Clin.append(np.nanmean(HD1))
     # HD_Tr_Clin.append(np.nanmean(HD2))
@@ -295,9 +297,9 @@ for epch in range(0,num_epch):
     plt.plot(diceTe_Spec,label='Spec Test')
     # plt.plot(diceTr_Other,label='Other Train')
     # plt.plot(diceTe_Other,label='Other Test')
-    # plt.plot(diceTr_Cons,label='Consistency StT UnLab')
+    plt.plot(diceTr_Cons,label='Consistency StT UnLab')
   
-    plt.ylim([0.6, 0.9])
+    # plt.ylim([0.6, 0.9])
     plt.legend()
     plt.show()    
     
@@ -321,3 +323,5 @@ for epch in range(0,num_epch):
 # open_file = open(file_name, "rb")
 # diceTr_Joint,diceTr_ACDC,diceTr_cons,diceTe_Joint,diceTe_ACDC,diceTe_StT = pickle.load(open_file)
 # open_file.close()
+
+torch.save(net, 'Models/net_' + version_new + '_end' + '.pt')

@@ -1,3 +1,4 @@
+
 import numpy as np
 import os
 import pydicom as dcm
@@ -41,7 +42,7 @@ def CreateDataset_ACDC(path_data, ):
                                        'Dts': 'ACDC',
                                        'Type': ''} )
             else:
-                for ind_slice in range(0,sizeData[2]):
+                for ind_slice in range(2,sizeData[2]-2):
                     data_list_te.append( {'img_path': os.path.join(pat_name, file_name[2] ), 
                                        'mask_path': os.path.join(pat_name, file_name[3] ),
                                        'slice': ind_slice,
@@ -138,48 +139,6 @@ def CreateDataset_StT_P_dcm(path_data, text1, text2):
                                                   'Seq': seq[0][0:2],
                                                   'Dts': 'Clin_StT',
                                                   'Type': seq[1]
-                                                  # 'ID_pat': ii,
-                                                  # 'ID_scan': iii
-                                                  } )
-                        iii+=1
-            
-    return data_list_tr
-
-
-def CreateDataset_StT_P_dcm_A(path_data, text1, text2):
-    data_list_tr = []
-    iii=0
-    p = os.listdir(path_data)
-    for ii in range(0,len(p)):
-        pat_name = p[ii]
-        f = os.listdir(os.path.join(path_data, pat_name))
-        if pat_name.find(text1)>=0:
-            for _,file in enumerate(f):
-                if file.find('_gt')>0:
-                    if file.find(text2)>=0:
-                        
-                        path_mask = os.path.join(path_data, pat_name, file)
-                        name = file[0:file.find('_gt')] + file[file.find('_gt')+3:]
-                        # path_maps = os.path.join(path_data, pat_name, name+'.nii.gz')
-                        path_maps = os.path.join(path_data, pat_name, name)
-                        seq = file.split('_')
-                    # if file.find('_W4')>=0:   
-                        # sizeData = Loaders.size( path_maps )
-                        sizeData = size_nii( path_maps )
-    
-                        if len(sizeData)==2:
-                            sizeData = sizeData + (1,)
-                        # print(sizeData)
-                        
-                        for sl in range(0,sizeData[2]):
-                            data_list_tr.append( {'img_path': path_maps,
-                                                  'mask_path': path_mask,
-                                                  'pat_name': pat_name,
-                                                  'file_name': name,
-                                                  'slice': seq[2],
-                                                  'Seq': seq[0][0:2],
-                                                  'Dts': 'Clin_StT',
-                                                  'Type': 'Anas'
                                                   # 'ID_pat': ii,
                                                   # 'ID_scan': iii
                                                   } )
@@ -392,11 +351,10 @@ def CreateDataset( ):
 
 
 
-def CreateDataset_div_valid( ):  
+def CreateDataset_div( ):  
     #### datasets
     data_list_2_train=[]
     data_list_2_test=[]
-    data_list_3=[]
     
     # # ACDC
     # path_data = '/data/rj21/Data/Data_ACDC/training'  # Linux bioeng358
@@ -406,113 +364,89 @@ def CreateDataset_div_valid( ):
 
     # # # ## StT LABELLED - JOINT
     # # path_data = '/data/rj21/Data/Data_Joint_StT_Labelled/Resaved_data_StT_cropped'  # Linux bioeng358
-    path_data = '/data/rj21/Data/Data_1mm/Joint'  # Linux bioeng358
+    # path_data = '/data/rj21/Data/Data_1mm/Joint'  # Linux bioeng358
     
-    # # data_list = CreateDataset_StT_J_dcm(os.path.normpath( path_data) , '')    # ## all joint
+    # data_list = CreateDataset_StT_J_dcm(os.path.normpath( path_data) , '')    # ## all joint
+    # b = int(len(data_list)*0.80)
+    # data_list_2_train = data_list_2_train + data_list[1:b]
+    # data_list_2_test = data_list_2_test + data_list[b:-1]
+    
+    # data_list = CreateDataset_StT_J_dcm(os.path.normpath( path_data) , 'T1')
+    # b = int(len(data_list)*0.80)
+    # data_list_2_train = data_list_2_train + data_list[1:b]
+    # data_list_2_test = data_list_2_test + data_list[b:-1]
+    
+    # data_list = CreateDataset_StT_J_dcm(os.path.normpath( path_data) , 'T2')
+    # b = int(len(data_list)*0.80)
+    # data_list_2_train = data_list_2_train + data_list[1:b]
+    # data_list_2_test = data_list_2_test + data_list[b:-1]
+    # # # data_list_2 = data_list_2 + data_list
+    
+    # data_list = CreateDataset_StT_J_dcm(os.path.normpath( path_data) , 'W1')
+    # b = int(len(data_list)*0.80)
+    # data_list_2_train = data_list_2_train + data_list[1:b]
+    # data_list_2_test = data_list_2_test + data_list[b:-1]
+    
+    # # data_list = CreateDataset_StT_J_dcm(os.path.normpath( path_data) , 'W4')
     # # b = int(len(data_list)*0.80)
     # # data_list_2_train = data_list_2_train + data_list[1:b]
-    # # # data_list_2_test = data_list_2_test + data_list[b:-1]
-    
-    data_list = CreateDataset_StT_J_dcm(os.path.normpath( path_data) , 'T1')
-    b = int(len(data_list)*0.80)
-    data_list_2_train = data_list_2_train + data_list[1:b]
-    data_list_2_test = data_list_2_test + data_list[b:-1]
-    # data_list_2_test = data_list_2_test + data_list
-    
-    data_list = CreateDataset_StT_J_dcm(os.path.normpath( path_data) , 'T2')
-    b = int(len(data_list)*0.80)
-    data_list_2_train = data_list_2_train + data_list[1:b]
-    data_list_2_test = data_list_2_test + data_list[b:-1]
-    # data_list_2_test = data_list_2_test + data_list
-    
-    data_list = CreateDataset_StT_J_dcm(os.path.normpath( path_data) , 'W1')
-    b = int(len(data_list)*0.80)
-    data_list_2_train = data_list_2_train + data_list[1:b]
-    data_list_2_test = data_list_2_test + data_list[b:-1]
-    # data_list_2_test = data_list_2_test + data_list
-    
-    data_list = CreateDataset_StT_J_dcm(os.path.normpath( path_data) , 'W4')
-    b = int(len(data_list)*0.80)
-    data_list_2_train = data_list_2_train + data_list[1:b]
-    data_list_2_test = data_list_2_test + data_list[b:-1]
-    # data_list_2_test = data_list_2_test + data_list
-    
-    # # data_list_2_train = data_list_2_train + data_list
+    # # data_list_2_test = data_list_2_test + data_list[b:-1]
     
     
     # # ## StT LABELLED - P1-30 for _m
     path_data = '/data/rj21/Data/Data_StT_Labaled'  # Linux bioeng358
-    # data_list = CreateDataset_StT_P_dcm(os.path.normpath( path_data ),'','_')
+    # data_list = CreateDataset_StT_P_dcm(os.path.normpath( path_data ),'','_m')
     
-    data_list = CreateDataset_StT_P_dcm(os.path.normpath( path_data ),'','T1pre_m')
-    b = int(len(data_list)*0.80)
-    data_list_2_train = data_list_2_train + data_list[1:b]
-    data_list_2_test = data_list_2_test + data_list[b:-1]
-    # data_list_2_test = data_list_2_test + data_list
-    
+    # data_list = CreateDataset_StT_P_dcm(os.path.normpath( path_data ),'','T1pre_m')
+    # b = int(len(data_list)*0.80)
+    # data_list_2_train = data_list_2_train + data_list[1:b]
+    # data_list_2_test = data_list_2_test + data_list[b:-1]
     
     data_list = CreateDataset_StT_P_dcm(os.path.normpath( path_data ),'','T2_m')
     b = int(len(data_list)*0.80)
     data_list_2_train = data_list_2_train + data_list[1:b]
     data_list_2_test = data_list_2_test + data_list[b:-1]
-    # data_list_2_test = data_list_2_test + data_list
     
-    data_list = CreateDataset_StT_P_dcm(os.path.normpath( path_data ),'','T1pre_c1')
-    b = int(len(data_list)*0.80)
-    data_list_2_train = data_list_2_train + data_list[1:b]
-    data_list_2_test = data_list_2_test + data_list[b:-1]
-    # data_list_2_test = data_list_2_test + data_list
+    # data_list = CreateDataset_StT_P_dcm(os.path.normpath( path_data ),'','T1pre_c1')
+    # b = int(len(data_list)*0.80)
+    # data_list_2_train = data_list_2_train + data_list[1:b]
+    # data_list_2_test = data_list_2_test + data_list[b:-1]
     
-    data_list = CreateDataset_StT_P_dcm(os.path.normpath( path_data ),'','T2_c3')
-    b = int(len(data_list)*0.80)
-    data_list_2_train = data_list_2_train + data_list[1:b]
-    data_list_2_test = data_list_2_test + data_list[b:-1]
-    # data_list_2_test = data_list_2_test + data_list
+    # data_list = CreateDataset_StT_P_dcm(os.path.normpath( path_data ),'','T2_c3')
+    # b = int(len(data_list)*0.80)
+    # data_list_2_train = data_list_2_train + data_list[1:b]
+    # data_list_2_test = data_list_2_test + data_list[b:-1]
     
     
         
     # ## Dataset - MyoPS
-    # # path_data = '/data/rj21/Data/Data_MyoPS'  # Linux bioeng358
-    path_data = '/data/rj21/Data/Data_1mm/MyoPS'  # Linux bioeng358
+    # # # path_data = '/data/rj21/Data/Data_MyoPS'  # Linux bioeng358
+    # path_data = '/data/rj21/Data/Data_1mm/MyoPS'  # Linux bioeng358
     
-    data_list = CreateDataset_MyoPS_dcm(os.path.normpath( path_data ), '_C0' )
+    # data_list = CreateDataset_MyoPS_dcm(os.path.normpath( path_data ), '_C0' )
     # b = int(len(data_list)*0.80)
     # data_list_2_train = data_list_2_train + data_list[1:b]
     # data_list_2_test = data_list_2_test + data_list[b:-1]
-    data_list_2_test = data_list_2_test + data_list
     
-    # data_list = CreateDataset_MyoPS_dcm(os.path.normpath( path_data ), '_DE' )
+    # # data_list = CreateDataset_MyoPS_dcm(os.path.normpath( path_data ), '_DE' )
+    # # b = int(len(data_list)*0.80)
+    # # data_list_2_train = data_list_2_train + data_list[1:b]
+    # # data_list_2_test = data_list_2_test + data_list[b:-1]
+    
+    # data_list = CreateDataset_MyoPS_dcm(os.path.normpath( path_data ), '_T2' )
     # b = int(len(data_list)*0.80)
     # data_list_2_train = data_list_2_train + data_list[1:b]
     # data_list_2_test = data_list_2_test + data_list[b:-1]
-    # data_list_2_test = data_list_2_test + data_list
-    
-    data_list = CreateDataset_MyoPS_dcm(os.path.normpath( path_data ), '_T2' )
-    # b = int(len(data_list)*0.80)
-    # data_list_2_train = data_list_2_train + data_list[1:b]
-    # data_list_2_test = data_list_2_test + data_list[b:-1]
-    data_list_2_test = data_list_2_test + data_list
-
-    # data_list_2_test = data_list_2_test + data_list
 
     
-    # # # ## Dataset - EMIDEC
+    # # ## Dataset - EMIDEC
     # # path_data = '/data/rj21/Data/Data_emidec'  # Linux bioeng358
-    path_data = '/data/rj21/Data/Data_1mm/Emidec'  # Linux bioeng358
-    
-    data_list = CreateDataset_Emidec_dcm(os.path.normpath( path_data ))
-    b = int(len(data_list)*0.80)
-    data_list_2_train = data_list_2_train + data_list[1:b]
-    data_list_2_test = data_list_2_test + data_list[b:-1]
-    # data_list_2_test = data_list_2_test + data_list
-    
-    
-    # # StT LABELLED - Anastazia Valid
-    path_data = '/data/rj21/Data/Data_StT_Anast_valid'  # Linux bioeng358
-    data_list = CreateDataset_StT_P_dcm_A(os.path.normpath( path_data ),'','')
-    data_list_2_test = data_list_2_test + data_list
-
-    
+    # path_data = '/data/rj21/Data/Data_1mm/Emidec'  # Linux bioeng358
+    # data_list = CreateDataset_Emidec_dcm(os.path.normpath( path_data ))
+    # b = int(len(data_list)*0.80)
+    # data_list_2_train = data_list_2_train + data_list[1:b]
+    # data_list_2_test = data_list_2_test + data_list[b:-1]
+    # # data_list_2 = data_list_2+data_list
     
     # ## Dataset - Alinas data
     # # path_data = '/data/rj21/Data/Data_1mm/T2_alina'  # Linux bioeng358
@@ -528,155 +462,10 @@ def CreateDataset_div_valid( ):
         data_list_2_test[i]['Set']='Test'
           
     
-    # # StT UNLABELLED
-    # path_data = '/data/rj21/Data/Data_StT_Unlabeled'  # Linux bioeng358
-    # data_list = CreateDataset_StT_UnL_dcm(os.path.normpath( path_data ),'','')
-    # data_list_3 = data_list
-
-    return data_list_2_train, data_list_2_test,  data_list_3
-
-
-
-
-def CreateDataset_div_train( ):  
-    #### datasets
-    data_list_2_train=[]
-    data_list_2_test=[]
-    data_list_3=[]
-    
-    # ACDC
-    path_data = '/data/rj21/Data/Data_ACDC/training'  # Linux bioeng358
-    data_list_train, data_list_test = CreateDataset_ACDC(os.path.normpath( path_data ))
-    data_list_2_train = data_list_2_train + data_list_train
-    data_list_2_test = data_list_2_test + data_list_test
-    
-
-    # # # ## StT LABELLED - JOINT
-    # # path_data = '/data/rj21/Data/Data_Joint_StT_Labelled/Resaved_data_StT_cropped'  # Linux bioeng358
-    path_data = '/data/rj21/Data/Data_1mm/Joint'  # Linux bioeng358
-    
-    # data_list = CreateDataset_StT_J_dcm(os.path.normpath( path_data) , '')    # ## all joint
-    # b = int(len(data_list)*0.80)
-    # data_list_2_train = data_list_2_train + data_list[1:b]
-    # data_list_2_test = data_list_2_test + data_list[b:-1]
-    # data_list_2_train = data_list_2_train + data_list
-
-    
-    data_list = CreateDataset_StT_J_dcm(os.path.normpath( path_data) , 'T1')
-    b = int(len(data_list)*0.80)
-    data_list_2_train = data_list_2_train + data_list[1:b]
-    data_list_2_test = data_list_2_test + data_list[b:-1]
-    # data_list_2_train = data_list_2_train + data_list
-    
-    data_list = CreateDataset_StT_J_dcm(os.path.normpath( path_data) , 'T2')
-    b = int(len(data_list)*0.80)
-    data_list_2_train = data_list_2_train + data_list[1:b]
-    data_list_2_test = data_list_2_test + data_list[b:-1]
-    # data_list_2_train = data_list_2_train + data_list
-    
-    data_list = CreateDataset_StT_J_dcm(os.path.normpath( path_data) , 'W1')
-    b = int(len(data_list)*0.80)
-    data_list_2_train = data_list_2_train + data_list[1:b]
-    data_list_2_test = data_list_2_test + data_list[b:-1]
-    # data_list_2_train = data_list_2_train + data_list
-
-    data_list = CreateDataset_StT_J_dcm(os.path.normpath( path_data) , 'W4')
-    b = int(len(data_list)*0.80)
-    data_list_2_train = data_list_2_train + data_list[1:b]
-    data_list_2_test = data_list_2_test + data_list[b:-1]
-    # data_list_2_train = data_list_2_train + data_list
-
-    
-    
-    # ## StT LABELLED - P1-30 for _m
-    path_data = '/data/rj21/Data/Data_StT_Labaled'  # Linux bioeng358
-    
-    data_list = CreateDataset_StT_P_dcm(os.path.normpath( path_data ),'','_')
-    b = int(len(data_list)*0.80)
-    data_list_2_train = data_list_2_train + data_list[1:b]
-    data_list_2_test = data_list_2_test + data_list[b:-1]
-    # data_list_2_train = data_list_2_train + data_list
-
-
-    # data_list = CreateDataset_StT_P_dcm(os.path.normpath( path_data ),'','T1pre_m')
-    # b = int(len(data_list)*0.80)
-    # data_list_2_train = data_list_2_train + data_list[1:b]
-    # data_list_2_test = data_list_2_test + data_list[b:-1]
-    # data_list_2_train = data_list_2_train + data_list
-    
-    # data_list = CreateDataset_StT_P_dcm(os.path.normpath( path_data ),'','T2_m')
-    # b = int(len(data_list)*0.80)
-    # data_list_2_train = data_list_2_train + data_list[1:b]
-    # # data_list_2_test = data_list_2_test + data_list[b:-1]
-    # data_list_2_train = data_list_2_train + data_list
-
-    # data_list = CreateDataset_StT_P_dcm(os.path.normpath( path_data ),'','T1pre_c1')
-    # # b = int(len(data_list)*0.80)
-    # # data_list_2_train = data_list_2_train + data_list[1:b]
-    # # data_list_2_test = data_list_2_test + data_list[b:-1]
-    # data_list_2_train = data_list_2_train + data_list
-
-    # data_list = CreateDataset_StT_P_dcm(os.path.normpath( path_data ),'','T2_c3')
-    # # b = int(len(data_list)*0.80)
-    # # data_list_2_train = data_list_2_train + data_list[1:b]
-    # # data_list_2_test = data_list_2_test + data_list[b:-1]
-    # data_list_2_train = data_list_2_train + data_list
-
-
-    
-
-
-        
-    # # ## Dataset - MyoPS
-    # # # path_data = '/data/rj21/Data/Data_MyoPS'  # Linux bioeng358
-    # path_data = '/data/rj21/Data/Data_1mm/MyoPS'  # Linux bioeng358
-    
-    # data_list = CreateDataset_MyoPS_dcm(os.path.normpath( path_data ), '_C0' )
-    # # b = int(len(data_list)*0.80)
-    # # data_list_2_train = data_list_2_train + data_list[1:b]
-    # # data_list_2_test = data_list_2_test + data_list[b:-1]
-    # data_list_2_test = data_list_2_test + data_list
-
-    
-    # # data_list = CreateDataset_MyoPS_dcm(os.path.normpath( path_data ), '_DE' )
-    # # b = int(len(data_list)*0.80)
-    # # data_list_2_train = data_list_2_train + data_list[1:b]
-    # # data_list_2_test = data_list_2_test + data_list[b:-1]
-    
-    # data_list = CreateDataset_MyoPS_dcm(os.path.normpath( path_data ), '_T2' )
-    # # b = int(len(data_list)*0.80)
-    # # data_list_2_train = data_list_2_train + data_list[1:b]
-    # # data_list_2_test = data_list_2_test + data_list[b:-1]
-    # data_list_2_test = data_list_2_test + data_list
-
-    
-    # # # ## Dataset - EMIDEC
-    # # path_data = '/data/rj21/Data/Data_emidec'  # Linux bioeng358
-    # path_data = '/data/rj21/Data/Data_1mm/Emidec'  # Linux bioeng358
-    # data_list = CreateDataset_Emidec_dcm(os.path.normpath( path_data ))
-    # # b = int(len(data_list)*0.80)
-    # # data_list_2_train = data_list_2_train + data_list[1:b]
-    # # data_list_2_test = data_list_2_test + data_list[b:-1]
-    # data_list_2_test = data_list_2_test + data_list
-    
-    # ## Dataset - Alinas data
-    # path_data = '/data/rj21/Data/Data_1mm/T2_alina'  # Linux bioeng358
-    # data_list = CreateDataset_StT_Alinas_dcm(os.path.normpath( path_data ),'','')
-    # b = int(len(data_list)*0.10)
-    # data_list_2_train = data_list_2_train + data_list[1:b]
-    # # data_list_2_test = data_list_2_test + data_list[b:-1]
-    # # data_list_2 = data_list_2+data_list
-
-    for i in range(len(data_list_2_train)):
-        data_list_2_train[i]['Set']='Train'
-    for i in range(len(data_list_2_test)):
-        data_list_2_test[i]['Set']='Test'
-          
-    
     # StT UNLABELLED
     path_data = '/data/rj21/Data/Data_StT_Unlabeled'  # Linux bioeng358
     data_list = CreateDataset_StT_UnL_dcm(os.path.normpath( path_data ),'','')
     data_list_3 = data_list
 
-    return data_list_2_train, data_list_2_test,  data_list_3
 
+    return data_list_2_train, data_list_2_test,  data_list_3

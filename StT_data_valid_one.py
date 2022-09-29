@@ -21,13 +21,13 @@ from scipy.io import savemat
 
 import Utilities as Util
 import Loaders
-import Network_v9 as Network
+import Network_Att as Network
 # import Network as Network
 #
 data_list_test=[]
 
-data_list_2_train, data_list_2_test, data_list_3_train = Loaders.CreateDataset_div()
-data_list_test = data_list_2_test
+data_list_2_train, data_list_2_test, data_list_3_train = Loaders.CreateDataset_div_valid()
+# data_list_test = data_list_2_test
 
 
 # ## StT LABELLED - JOINT
@@ -68,8 +68,13 @@ data_list_test = data_list_2_test
 # # b = int(len(data_list)*0.80)
 # # data_list_test = data_list_test + data_list[b+1:]
 
-for i in range(len(data_list_test)):
-    data_list_test[i]['Set']='Test'
+for i in range(len(data_list_2_test)):
+    data_list_2_test[i]['Set']='Test'
+    
+for i in range(len(data_list_2_train)):
+    data_list_2_train[i]['Set']='Train'    
+
+data_list_test = data_list_2_test + data_list_2_train
         
 # version = "v8_3_4"
 # version = "v8_3_9_1"
@@ -86,28 +91,36 @@ for i in range(len(data_list_test)):
 # version = "v9_2_1_6"
 # version = 'v9_1_6_8'
 # version = 'v8_3_8_1'
-    
 
-for v in range(2,5):
-        
-    # version = 'v10_1_4'
-    # version = 'v10_2_15'
-    version = 'v10_3_' + str(v)
+# seznam = ('v10_4_4x','v10_4_4xx','v10_5_1_end','v10_5_1','v10_5_2_end','v10_5_2')
+# seznam = ('v10_6_1', 'v10_6_1_end')
+seznam = ('v10_6_1_end',)
+
+# for v in range(0,2):
+for _, version in enumerate(seznam):
+
+    random.seed(777)
+    
+# version = 'v11_0_3'
+# version = 'v10_1_3'
+# version = 'v10_4_1'
+    
+    # version = version + '_seed77'
     
     net = torch.load(r"/data/rj21/MyoSeg/Models/net_" + version + ".pt")
     net = net.cuda()
-    
+        
     # path_save = '/data/rj21/MyoSeg/valid/expert/cine/'
     path_save = '/data/rj21/MyoSeg/valid/valid_001/'
     
     # version = version + ""
-    version = version + ""
+    # version = version + "_seed77"
     
     # save_name = 'Joint_valid'
     # save_name = 'All_valid'
     # save_name = 'alinas_valid'
     # save_name = '_test'
-    save_name = ''
+    save_name = '_seed777'
     
     try:
         os.mkdir(path_save)
@@ -125,7 +138,8 @@ for v in range(2,5):
     params = (velImg,  velImg,velImg,  0,0,  0,0,0,0,   1.0,1.0,  1.0) 
     
     # random.seed(77)
-    # random.shuffle(data_list_test)
+    
+    random.shuffle(data_list_test)
     
     # for num in range(0,20):
     for num in range(0,len(data_list_test),1):
@@ -338,56 +352,58 @@ for v in range(2,5):
         # Fig = plt.figure()
         # plt.imshow(img[0,:,:], cmap='gray')
         
-        # for ii in range(0,2):  
-        #     if ii==0:
-        #         res = Res[8,:,:]>tresh
-        #     else:
-        #         res = np.median(Res,0) > tresh  
+        for ii in range(0,2):  
+            if ii==0:
+                res = Res[8,:,:]>tresh
+            else:
+                res = np.median(Res,0) > tresh  
         
         
-        # # res = np.median(Res,0) > tresh
-        # res = res2M.detach().cpu().numpy()
-        # # # res = Res[8,:,:]>tresh
+        # res = np.median(Res,0) > tresh
+        res = res2M.detach().cpu().numpy()
+        # # res = Res[8,:,:]>tresh
      
-        # resB = res.astype(np.dtype('uint8'))
-        # dimg = cv2.dilate(resB, cv2.getStructuringElement(cv2.MORPH_ELLIPSE,(3,3)) )
-        # ctr = dimg - resB
+        resB = res.astype(np.dtype('uint8'))
+        dimg = cv2.dilate(resB, cv2.getStructuringElement(cv2.MORPH_ELLIPSE,(3,3)) )
+        ctr = dimg - resB
         
-        # GT = (mask.detach().cpu().numpy()>0.5).astype(np.dtype('uint8'))
-        # dimg = cv2.dilate(GT, cv2.getStructuringElement(cv2.MORPH_ELLIPSE,(3,3)) )
-        # ctrGT = dimg - GT
+        GT = (mask.detach().cpu().numpy()>0.5).astype(np.dtype('uint8'))
+        dimg = cv2.dilate(GT, cv2.getStructuringElement(cv2.MORPH_ELLIPSE,(3,3)) )
+        ctrGT = dimg - GT
         
-        # imgB = img[0,:,:].numpy().astype(np.dtype('float'))
-        # imgB = (( imgB - imgB.min() ) / (imgB.max() - imgB.min()) )
-        # # imgB = ( imgB - 0 ) / (0.7 - 0 )    # for Clinical T1
-        # imgB[imgB<0]=0
-        # imgB[imgB>1]=1
-        # RGB_imgB = cv2.cvtColor((imgB*255).astype(np.dtype('uint8')),cv2.COLOR_GRAY2RGB)
         
-        # comp = RGB_imgB[:,:,0]
-        # comp[ctr==1]=255
-        # comp[ctrGT==1]=0
-        # RGB_imgB[:,:,0] = comp
+        imgB = img[0,:,:].numpy().astype(np.dtype('float'))
+        imgB = (( imgB - imgB.min() ) / (imgB.max() - imgB.min()) )
+        # imgB = ( imgB - 0 ) / (0.7 - 0 )    # for Clinical T1
+        imgB[imgB<0]=0
+        imgB[imgB>1]=1
+        RGB_imgB = cv2.cvtColor((imgB*255).astype(np.dtype('uint8')),cv2.COLOR_GRAY2RGB)
         
-        # comp = RGB_imgB[:,:,1]
-        # comp[ctr==1]=0
-        # comp[ctrGT==1]=255
-        # RGB_imgB[:,:,1] = comp
+        comp = RGB_imgB[:,:,0]
+        comp[ctr==1]=255
+        comp[ctrGT==1]=0
+        RGB_imgB[:,:,0] = comp
         
-        # comp = RGB_imgB[:,:,2]
-        # comp[ctr==1]=0
-        # comp[ctrGT==1]=0
-        # RGB_imgB[:,:,2] = comp
+        comp = RGB_imgB[:,:,1]
+        comp[ctr==1]=0
+        comp[ctrGT==1]=255
+        RGB_imgB[:,:,1] = comp
+        
+        comp = RGB_imgB[:,:,2]
+        comp[ctr==1]=0
+        comp[ctrGT==1]=0
+        RGB_imgB[:,:,2] = comp
             
-        # Fig = plt.figure()
-        # plt.imshow(imgB,cmap='gray')
-        # plt.show()
-        # plt.draw()
+        Fig = plt.figure()
+        plt.imshow(imgB,cmap='gray')
+        plt.show()
+        plt.draw()
         
-        # Fig = plt.figure()
-        # plt.imshow(RGB_imgB)
-        # plt.show()
-        # plt.draw()
+        Fig = plt.figure()
+        plt.imshow(RGB_imgB)
+        plt.text(-10,-10,img_path)
+        plt.show()
+        plt.draw()
         
         # # Fig = plt.figure()
         # # plt.imshow( np.mean(Res,0))
@@ -402,6 +418,6 @@ for v in range(2,5):
         # mdic = {"segm_mask": res, "dcm_data": img[0,:,:].numpy(), "prob_maps": Res, "GT":B}
         # savemat(  path_save + '/' + version[0:2] + '_' +  nPat + file_name.split('_')[0] + '_' + seq + '_' + current_index + '.mat', mdic)
     
-    Util.save_to_excel(res_table, path_save + '/' , 'Res' + save_name + '_' + version)
+    # Util.save_to_excel(res_table, path_save + '/' , 'Res' + save_name + '_' + version)
     
     

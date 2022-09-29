@@ -106,8 +106,22 @@ class U_Net(nn.Module):
 
     def forward(self,x):
         # encoding path
-        m, s = torch.mean(x,(2,3)), torch.std(x,(2,3))
+        
+        x[x==0] = float('nan')
+
+        # ax = plt.hist(x[0,0,:,:].detach().cpu().numpy().ravel(), bins = 256)
+        # plt.show()
+        
+        m, s = torch.nanmean(x,(2,3)), torch.tensor(np.nanstd(x.cpu().numpy(),(2,3))).cuda()
         x = (x - m[:,:,None, None]) / s[:,:,None,None]
+        
+        x[torch.isnan(x)] = 0
+        
+        # ax = plt.hist(x[0,0,:,:].detach().cpu().numpy().ravel(), bins = 256)
+        # plt.xlim([-1.0, 1.0])
+        # plt.show()
+
+        
         
         x1 = self.Conv1(x)
 

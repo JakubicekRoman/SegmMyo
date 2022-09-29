@@ -134,8 +134,13 @@ class AttU_Net(nn.Module):
 
     def forward(self,x):
         # encoding path
-        m, s = torch.mean(x,(2,3)), torch.std(x,(2,3))
+        
+        x[x==0] = float('nan')
+        
+        m, s = torch.nanmean(x,(2,3)), torch.tensor(np.nanstd(x.cpu().numpy(),(2,3))).cuda()
         x = (x - m[:,:,None, None]) / s[:,:,None,None]
+        
+        x[torch.isnan(x)] = 0
         
         x1 = self.Conv1(x)
 
@@ -202,9 +207,10 @@ class Training():
             mask_path = data_list[b]['mask_path']
             t=0
             if img_path.find('.nii')>0:
-                img = Util.read_nii( img_path, (0,0,current_index,t) )
-                mask = Util.read_nii( mask_path, (0,0,current_index,t) )
+                img,resO = Util.read_nii( img_path, (0,0,current_index,t) )
+                mask,resO = Util.read_nii( mask_path, (0,0,current_index,t) )
                 mask = mask==2
+                resO = resO[0:2]
             elif img_path.find('.dcm')>0:
                 dataset = dcm.dcmread(img_path)
                 img = dataset.pixel_array.astype(dtype='float32')
@@ -212,10 +218,10 @@ class Training():
                 mask = dataset.pixel_array
                 mask = mask==1  
             
-            if len(dataset.dir('PixelSpacing'))>0:
-                resO = (dataset['PixelSpacing'].value[0:2])
-            else:
-                resO = (1.0, 1.0)
+                if len(dataset.dir('PixelSpacing'))>0:
+                    resO = (dataset['PixelSpacing'].value[0:2])
+                else:
+                    resO = (1.0, 1.0)
             
             resN = (params[11],params[11])
             
@@ -267,90 +273,11 @@ class Training():
         res = net( Imgs.cuda() )
         # res = torch.softmax(res,dim=1)
         res = torch.sigmoid(res)
-        # Masks[:,1,:,:] = (1-Masks[:,0,:,:])
         loss = Util.dice_loss( res[:,0,:,:], Masks[:,0,:,:].cuda() )
         
         return loss, res, Imgs, Masks
     
-    
-    
-    def straightForwardFour(data_list, net, params, TrainMode=True, Contrast=False): 
-
-        net.train(mode=TrainMode)
-        batch = len(data_list)
-        vel = params[0]
-        # vel = 256
-          
-        Imgs = torch.tensor(np.zeros((batch,4,vel,vel) ), dtype=torch.float32)
-        Masks = torch.tensor(np.zeros((batch,4,vel,vel) ), dtype=torch.float32)
-        
-        for b in range(0,batch):
-            current_index = data_list[b]['slice']
-            img_path1 = data_list[b]['img_path']
-            mask_path1 = data_list[b]['mask_path']
-            
-            augm = random.uniform(0, 1)>=0.3
-            # augm = True
-            augm_params=[]; t=0
-            augm_params.append({'Output_size': params[0],
-                            'Crop_size': random.randint(params[1],params[2]),
-                            'Angle': random.randint(params[3],params[4]),
-                            'Transl': (random.randint(params[5],params[6]),random.randint(params[7],params[8])),
-                            'Scale': random.uniform(1.0,1.0),
-                            'Flip':  np.random.random()>0.5
-                            })
-            nImg = ('T1','T2','W1','W4')
-            for c in range(0,4):
-            # for c in range(0,1):
-                img_path = img_path1.replace('W4',nImg[c])
-                mask_path = mask_path1.replace('W4',nImg[c])
-                
-                if img_path.find('.nii')>0:
-                    img = Util.read_nii( img_path, (0,0,current_index,t) )
-                    mask = Util.read_nii( mask_path, (0,0,current_index,t) )
-                    mask = mask==2
-                elif img_path.find('.dcm')>0:
-                    dataset = dcm.dcmread(img_path)
-                    img = dataset.pixel_array.astype(dtype='float32')
-                    dataset = dcm.dcmread(mask_path)
-                    mask = dataset.pixel_array
-                    mask = mask==1    
-                
-                if not augm:
-                    img = Util.resize_with_padding(img,(vel,vel))
-                    mask = Util.resize_with_padding(mask,(vel,vel))    
-                
-                img = np.expand_dims(img, 0).astype(np.float32)
-                mask = np.expand_dims(mask, 0).astype(np.float32)    
-    
-                img = torch.tensor(img)
-                mask = torch.tensor(mask)
-                
-                if  augm:
-                    img = Util.augmentation2(img, augm_params)
-                    mask = Util.augmentation2(mask, augm_params)
-                    mask = mask>0.5   
-            
-                Imgs[b,c,:,:] = img
-                Masks[b,c,:,:] = mask
-                # Imgs[b,1,:,:] = img
-                # Masks[b,1,:,:] = mask
-                # Imgs[b,2,:,:] = img
-                # Masks[b,2,:,:] = mask
-                # Imgs[b,3,:,:] = img
-                # Masks[b,3,:,:] = mask
-
-            
-        res = net( Imgs.cuda() )
-        # res = torch.softmax(res,dim=1)
-        res = torch.sigmoid(res)
-        loss = Util.dice_loss( res[:,0,:,:], Masks[:,0,:,:].cuda() )
-        
-        return loss, res, Imgs, Masks
-
-
-
-
+  
     def Consistency(data_list, net, params, TrainMode=True, Contrast=False): 
         
         batch = len(data_list)
@@ -372,17 +299,18 @@ class Training():
             img_path = data_list[b]['img_path']
             t=0
             if img_path.find('.nii')>0:
-                img = Util.read_nii( img_path, (0,0,current_index,t) )
+                img,resO = Util.read_nii( img_path, (0,0,current_index,t) )
+                resO = resO[0:2]
             elif img_path.find('.dcm')>0:
                 dataset = dcm.dcmread(img_path)
                 img = dataset.pixel_array.astype(dtype='float32')
                 
-            if len(dataset.dir('PixelSpacing'))>0:
-                resO = (dataset['PixelSpacing'].value[0:2])
-            else:
-                resO = (2.0, 2.0)
+                if len(dataset.dir('PixelSpacing'))>0:
+                    resO = (dataset['PixelSpacing'].value[0:2])
+                else:
+                    resO = (1.0, 1.0)
             
-            resN = (1.0, 1.0)
+            resN = (params[11],params[11])
             
             # resampling to 1mm resolution
             img = torch.tensor( np.expand_dims(img, 0).astype(np.float32))
@@ -402,14 +330,17 @@ class Training():
             
         
         net.train(mode=TrainMode)
-        # net.train(mode=False)
-    # with torch.no_grad():
-        res = net( Imgs.cuda() )
-        # res = torch.softmax(res,dim=1)
-        res = torch.sigmoid(res)
-        res_P = net( Imgs_P.cuda() )
-        # res_P = torch.softmax(res_P,dim=1)
-        res_P = torch.sigmoid(res_P)
+        if TrainMode:
+            res = net( Imgs.cuda() )
+            res = torch.sigmoid(res)
+            res_P = net( Imgs_P.cuda() )
+            res_P = torch.sigmoid(res_P)
+        else:           
+            with torch.no_grad():
+                res = net( Imgs.cuda() )
+                res = torch.sigmoid(res)
+                res_P = net( Imgs_P.cuda() )
+                res_P = torch.sigmoid(res_P)
         
         res = Util.augmentation2(res[:,[0],:,:], augm_params)
         # # MSE = nn.MSELoss()
