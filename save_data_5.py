@@ -6,6 +6,7 @@ Created on Wed Sep 28 17:37:49 2022
 @author: rj21
 """
 
+# Pro myoseg
 ## pro jen nektere database, jako predtim u MyoSeg
 
 from file_folder_utils import subdirs, subfiles, prepare_nnUNet_file_structure, generate_dataset_json_new
@@ -23,11 +24,14 @@ import matplotlib as plt
 path = r'/data/rj21/Data/Data_all_nii'
 outpath = r'/data/rj21/MyoSeg/params_net'
 
-Task = 'Task743_MyoSeg'
+Task = 'Task744_MyoSeg'
+# Task = 'unLab_MyoSeg'
 
 datatsets_list = subdirs(path)
-# patients_list = glob.glob(path+os.sep+'**'+os.sep+'Data.nii.gz', recursive=True)
+datatsets_list.pop(7)
+# del datatsets_list[0:7]
 
+# patients_list = glob.glob(path+os.sep+'**'+os.sep+'Data.nii.gz', recursive=True)
 
 # prepare the list of all patients and series
 scans_list = pd.DataFrame({'Dataset' : []})
@@ -53,10 +57,21 @@ for k, dat in enumerate(datatsets_list):
             scans_list.loc[i, ('Slice')] = sl
             scans_list.loc[i, ('Data_path')] = file
             
-            if k>=5:
+            # scans_list.loc[i, ('Set')] = 'Cons'
+            
+            # if k>=5 and k<7:
+            #     scans_list.loc[i, ('Set')] = 'train'
+            # elif k==7:
+            #     scans_list.loc[i, ('Set')] = 'Cons'
+            # else:
+            #     scans_list.loc[i, ('Set')] = 'test'
+            
+            if l<=(0.8*len(patients_list)):
                 scans_list.loc[i, ('Set')] = 'train'
             else:
                 scans_list.loc[i, ('Set')] = 'test'
+                
+                
         
 scans_list.sort_values(by=['Patient'])
 

@@ -11,6 +11,8 @@ import Utilities as Util
 from torch.nn import init
 import random
 import matplotlib.pyplot as plt
+import nibabel as nib
+
 # from PIL import Image 
 
 
@@ -202,15 +204,16 @@ class Training():
         Masks = torch.tensor(np.zeros((batch,1,vel,vel) ), dtype=torch.float32)
         
         for b in range(0,batch):
-            current_index = data_list[b]['slice']
-            img_path = data_list[b]['img_path']
-            mask_path = data_list[b]['mask_path']
+            current_index = data_list.iloc[b]['Slice']
+            img_path = data_list.iloc[b]['Data_path']
+            mask_path = img_path.replace('Data.','Mask.')
             t=0
             if img_path.find('.nii')>0:
-                img,resO = Util.read_nii( img_path, (0,0,current_index,t) )
-                mask,resO = Util.read_nii( mask_path, (0,0,current_index,t) )
-                mask = mask==2
-                resO = resO[0:2]
+                nii_data = nib.load(img_path)
+                img = nii_data.dataobj[:,:,current_index]
+                nii_dataM = nib.load(mask_path)
+                mask = nii_dataM.dataobj[:,:,current_index]
+                # mask = mask==1
             elif img_path.find('.dcm')>0:
                 dataset = dcm.dcmread(img_path)
                 img = dataset.pixel_array.astype(dtype='float32')
@@ -218,10 +221,11 @@ class Training():
                 mask = dataset.pixel_array
                 mask = mask==1  
             
-                if len(dataset.dir('PixelSpacing'))>0:
-                    resO = (dataset['PixelSpacing'].value[0:2])
-                else:
-                    resO = (1.0, 1.0)
+            resO = tuple(nii_data.header['pixdim'][1:4])
+            # if len(dataset.dir('PixelSpacing'))>0:
+            #     resO = (dataset['PixelSpacing'].value[0:2])
+            # else:
+            #     resO = (1.0, 1.0)
             
             resN = (params[11],params[11])
             
@@ -295,23 +299,31 @@ class Training():
         Imgs_P = torch.tensor(np.zeros((batch,1,vel,vel) ), dtype=torch.float32)
         
         for b in range(0,batch):
-            current_index = data_list[b]['slice']
-            img_path = data_list[b]['img_path']
+            current_index = data_list.iloc[b]['Slice']
+            img_path = data_list.iloc[b]['Data_path']
+            mask_path = img_path.replace('Data.','Mask.')
             t=0
             if img_path.find('.nii')>0:
-                img,resO = Util.read_nii( img_path, (0,0,current_index,t) )
-                resO = resO[0:2]
+                nii_data = nib.load(img_path)
+                img = nii_data.dataobj[:,:,current_index]
+                nii_dataM = nib.load(mask_path)
+                mask = nii_dataM.dataobj[:,:,current_index]
+                # mask = mask==1
             elif img_path.find('.dcm')>0:
                 dataset = dcm.dcmread(img_path)
                 img = dataset.pixel_array.astype(dtype='float32')
-                
-                if len(dataset.dir('PixelSpacing'))>0:
-                    resO = (dataset['PixelSpacing'].value[0:2])
-                else:
-                    resO = (1.0, 1.0)
+                dataset = dcm.dcmread(mask_path)
+                mask = dataset.pixel_array
+                mask = mask==1  
+            
+            resO = tuple(nii_data.header['pixdim'][1:4])
+            # if len(dataset.dir('PixelSpacing'))>0:
+            #     resO = (dataset['PixelSpacing'].value[0:2])
+            # else:
+            #     resO = (1.0, 1.0)
             
             resN = (params[11],params[11])
-            
+
             # resampling to 1mm resolution
             img = torch.tensor( np.expand_dims(img, 0).astype(np.float32))
             img = Util.Resampling(img, resO, resN, 'bilinear').detach().numpy()[0,:,:]
